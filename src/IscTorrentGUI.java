@@ -4,6 +4,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -13,6 +14,8 @@ import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FilenameFilter;
 
 /*
  * Objetivo: Esta classe gerencia a interface gráfica do usuário, encapsulando todos os elementos e funcionalidades da GUI do sistema.
@@ -45,13 +48,14 @@ import java.awt.event.ActionListener;
 public class IscTorrentGUI {
     private JFrame mainFrame; // Janela principal (dividida em paineis)
     private JTextField searchKeyword; // Palavra-chave a ser pesquisada
-    private JList resultList; // Lista de resultados da pesquisa
+    private JList <FileSearchResult> resultList; // Lista de resultados da pesquisa - confirmar se é este objeto
 
     private JFrame connectFrame; // Janela de conexão com um nó
     private JTextField addressField; // Endereço do nó
     private JTextField portField; // Porta do nó
 
-    public IscTorrentGUI() {
+
+    public IscTorrentGUI( String folderPath ) {  //folderPath é o caminho para a pasta onde estão as músicas (endereco+porta do node)
         // Inicializa a janela principal
         this.mainFrame = new JFrame("IscTorrent");
         this.mainFrame.setLayout(new BorderLayout()); //border layout para dividir a janela em 2 paineis (tamanho variável)
@@ -95,15 +99,21 @@ public class IscTorrentGUI {
         searchButton.addActionListener(new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent e) {
-                //método para pesquisar a palavra-chave
-                //...
+                //método para pesquisar a palavra-chave -ig que é isto mas not sure
+                if(searchKeyword.getText().isEmpty())
+                    JOptionPane.showMessageDialog(null, "Insira uma palavra-chave!");
+                else{
+                    WordSearchMessage wsm = new WordSearchMessage(searchKeyword.getText());
+                    resultList.setListData(wsm.searchFiles().toArray(new FileSearchResult[0])); //meter isto mais bonito - solução copilot
+                }
             }
         });
         searchPanel.add(searchButton, BorderLayout.EAST);
 
         // Adiciona os elementos do painel de resultados + botões
         // Painel de resultados
-        resultList = new JList();
+        resultList = new JList  <FileSearchResult>(); //confirmar se é este tipo de objeto
+        //TODO
         resultPanel.add(resultList, BorderLayout.CENTER);
         // Painel de botões
         JPanel buttonPanel = new JPanel();
@@ -114,9 +124,15 @@ public class IscTorrentGUI {
         downloadButton.addActionListener(new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent e) {
-                //método para downloadar as musicas
-                //...
-            }
+				if(resultList.isSelectionEmpty())
+					JOptionPane.showMessageDialog(null, "Não está nenhum item selecionado!");
+				else if(resultList.getSelectedIndices().length>1) //depois meter isto funcional
+					JOptionPane.showMessageDialog(null, "Estão vários itens selecionados!");
+				else { //se só escolher 1
+					//método para descarregar o ficheiro
+                    //...
+				}
+			}
         });
         buttonPanel.add(downloadButton);
         // Botão "Ligar a nó"
@@ -129,6 +145,7 @@ public class IscTorrentGUI {
         });
         buttonPanel.add(connectButton);
     }
+
 
     private void addConnectFrameContent() {
         connectFrame.setSize(800, 100);
@@ -167,13 +184,14 @@ public class IscTorrentGUI {
         connectPanel.add(okButton);
 
     }
+
     public void open() {
         mainFrame.setVisible(true);
         connectFrame.setVisible(false);
     }
     
     public static void main(String[] args) {
-        IscTorrentGUI gui = new IscTorrentGUI();
+        IscTorrentGUI gui = new IscTorrentGUI("node1-server");
         gui.open();
     }
 }

@@ -13,5 +13,26 @@ package src;
  */
 
 public class FileSearchResult{
+      private WordSearchMessage wordSearchMessage;
+      private String hash;
+      private long tamanho;
+      private String nome;
+      private String endereco;
+      private int porta;
+   
+      public FileSearchResult(WordSearchMessage wordSearchMessage, String hash, long tamanho, String nome, String endereco, int porta){
+         this.wordSearchMessage = wordSearchMessage;
+         this.hash = hash;
+         this.tamanho = tamanho;
+         this.nome = nome;
+         this.endereco = endereco;
+         this.porta = porta;
+      }
+
+      @Override
+      public String toString() {
+          // TODO Auto-generated method stub
+          return "Nome: " + this.nome + " | Endereço: " + this.endereco + " | Porta: " + this.porta;
+      }
 
 }
