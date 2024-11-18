@@ -10,10 +10,13 @@ public class Node {
     private int port;
     private String address;
     private String folderPath;
-    private List <Socket> connections;
+
     private List <WordSearchMessage> searchThreads = new ArrayList<WordSearchMessage>();
     private List <FileSearchResult> searchResults = new ArrayList<FileSearchResult>();
     private int numThreads = 3;
+
+    private List <Socket> connections; //lista de sockets connectado
+    private ServerSocket serverSocket; //socket para aceitar conexões
 
     public Node(int port, String address, String folderPath) {
         this.port = port;
@@ -29,13 +32,29 @@ public class Node {
         }
     }
 
-    public void acceptConnections(ServerSocket socket) throws IOException {
-        while (true) {
-            Socket connection = socket.accept();
-            connections.add(connection);
-            System.out.println("Connection received from: " + connection.getInetAddress().getHostName());
-        }
+    //
+    //
+    // Métodos para criar e aceitar conexões
+    //
+    //
+/* 
+    public void startServer() throws IOException {
+        NewConnectionRequest newConnection = new NewConnectionRequest(ServerSocket);
     }
+
+    public void newConnection(String address, int port) throws IOException {
+        NewConnectionRequest newConnection = new NewConnectionRequest(address, port);
+        connections.add(newConnection.getSocket());
+    }
+
+*/
+
+
+    //
+    //
+    // Métodos para pesquisar ficheiros - isto vai sair daqui e ir para downloadtasksmanager ig
+    //
+    //
 
     //ao clicar no botão "Procurar", a GUI chama este método
     //no futuro este método será chamado por mensagens
@@ -59,6 +78,25 @@ public class Node {
         searchResults.clear();
     }
 
+
+    //
+    //
+    // Métodos para download de ficheiros
+    //
+    //
+    public void sendDownloadRequest(FileSearchResult result) {
+        DownloadTasksManager downloadManager = new DownloadTasksManager(result);
+    }
+
+
+
+
+
+
+
+
+
+    //getter methods
     public List<FileSearchResult> getSearchResults() {
         return searchResults;
     }

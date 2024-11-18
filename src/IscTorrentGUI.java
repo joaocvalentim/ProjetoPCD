@@ -106,7 +106,7 @@ public class IscTorrentGUI {
                 else{
                     node.sendSearchRequest(searchKeyword.getText()); //enviar a palavra-chave para o nó
                     try {
-                        Thread.sleep(1); //esperar um pouco para receber os resultados
+                        Thread.sleep(10); //esperar um pouco para receber os resultados
                     } catch (InterruptedException e1) {
                         e1.printStackTrace();
                     }
@@ -138,9 +138,9 @@ public class IscTorrentGUI {
 					JOptionPane.showMessageDialog(null, "Não está nenhum item selecionado!");
 				else if(resultList.getSelectedIndices().length>1) //depois meter isto funcional
 					JOptionPane.showMessageDialog(null, "Estão vários itens selecionados!");
-				else { //se só escolher 1
-					//método para descarregar o ficheiro
-                    //...
+				else { 
+                    FileSearchResult fsr = resultList.getSelectedValue();
+                    node.sendDownloadRequest(fsr); //enviar o pedido de download para o nó
 				}
 			}
         });
