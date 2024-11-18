@@ -14,8 +14,6 @@ import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.FilenameFilter;
 
 /*
  * Objetivo: Esta classe gerencia a interface gráfica do usuário, encapsulando todos os elementos e funcionalidades da GUI do sistema.
@@ -44,8 +42,11 @@ import java.io.FilenameFilter;
  *     - Botão "OK"
  * 
  */
-
 public class IscTorrentGUI {
+    private Node node; // Nó ao qual a GUI está conectada
+    public WordSearchMessage[] wordSearchMessages ;
+
+
     private JFrame mainFrame; // Janela principal (dividida em paineis)
     private JTextField searchKeyword; // Palavra-chave a ser pesquisada
     private JList <FileSearchResult> resultList; // Lista de resultados da pesquisa - confirmar se é este objeto
@@ -54,10 +55,11 @@ public class IscTorrentGUI {
     private JTextField addressField; // Endereço do nó
     private JTextField portField; // Porta do nó
 
-
-    public IscTorrentGUI( String folderPath ) {  //folderPath é o caminho para a pasta onde estão as músicas (endereco+porta do node)
+    public IscTorrentGUI( Node node , WordSearchMessage[] wordSearchMessages) {  //folderPath é o caminho para a pasta onde estão as músicas (endereco+porta do node)
+        this.wordSearchMessages = wordSearchMessages;
+        this.node = node;
         // Inicializa a janela principal
-        this.mainFrame = new JFrame("IscTorrent");
+        this.mainFrame = new JFrame(node.getFolderPath()); //nome da janela principal é o caminho para a pasta onde estão as músicas
         this.mainFrame.setLayout(new BorderLayout()); //border layout para dividir a janela em 2 paineis (tamanho variável)
         this.mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Fecha o programa quando a janela principal é fechada
         addMainFrameContent(); // Adiciona os elementos da janela principal
@@ -78,7 +80,6 @@ public class IscTorrentGUI {
         mainFrame.setLocation(dimension.width/2-mainFrame.getSize().width/2, dimension.height/2-mainFrame.getSize().height/2);
 
         // Adiciona os elementos da janela principal
-        
         // Painel de pesquisa
         JPanel searchPanel = new JPanel();
         searchPanel.setLayout(new GridLayout(1,3)); // grid layout para alinhar os elementos horizontalmente - mesmo tamanho as 3 colunas
@@ -103,8 +104,17 @@ public class IscTorrentGUI {
                 if(searchKeyword.getText().isEmpty())
                     JOptionPane.showMessageDialog(null, "Insira uma palavra-chave!");
                 else{
-                    WordSearchMessage wsm = new WordSearchMessage(searchKeyword.getText());
-                    resultList.setListData(wsm.searchFiles().toArray(new FileSearchResult[0])); //meter isto mais bonito - solução copilot
+                    node.sendSearchRequest(searchKeyword.getText()); //enviar a palavra-chave para o nó
+                    try {
+                        Thread.sleep(1); //esperar um pouco para receber os resultados
+                    } catch (InterruptedException e1) {
+                        e1.printStackTrace();
+                    }
+                    if(node.getSearchResults().isEmpty())
+                        JOptionPane.showMessageDialog(null, "Não foram encontrados resultados para a pesquisa!");
+                    resultList.setListData(node.getSearchResults().toArray(new FileSearchResult[0])); //meter isto mais bonito - solução copilot 
+                    node.resetSearchResults(); //resetar os resultados da pesquisa
+                    
                 }
             }
         });
@@ -146,7 +156,6 @@ public class IscTorrentGUI {
         buttonPanel.add(connectButton);
     }
 
-
     private void addConnectFrameContent() {
         connectFrame.setSize(800, 100);
         connectFrame.setResizable(false);
@@ -184,14 +193,8 @@ public class IscTorrentGUI {
         connectPanel.add(okButton);
 
     }
-
     public void open() {
         mainFrame.setVisible(true);
         connectFrame.setVisible(false);
-    }
-    
-    public static void main(String[] args) {
-        IscTorrentGUI gui = new IscTorrentGUI("node1-server");
-        gui.open();
     }
 }

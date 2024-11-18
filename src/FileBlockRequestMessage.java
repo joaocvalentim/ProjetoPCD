@@ -9,5 +9,4 @@ package src;
     Métodos: Não especificado.
  */
 public class FileBlockRequestMessage {
-    
 }
