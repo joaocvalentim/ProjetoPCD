@@ -13,18 +13,19 @@ public class DownloadTasksManager {
    private final int BLOCK_SIZE = 1024;
    private List<FileBlockRequestMessage> blockRequest;
    private int numBlocks;
-   private int numBlocksReceived=0;
+   private int numBlocksReceived = 0;
 
-   public DownloadTasksManager(FileSearchResult fsr){
+   public DownloadTasksManager(FileSearchResult fsr) {
       blockRequest = new ArrayList<FileBlockRequestMessage>();
-      for (int i=0; i<fsr.getTamanho(); i+=BLOCK_SIZE){
-         blockRequest.add(new FileBlockRequestMessage(fsr.getHash(), i, (int)Math.min(i+BLOCK_SIZE,fsr.getTamanho())-i));
+      for (int i = 0; i < fsr.getTamanho(); i += BLOCK_SIZE) {
+         blockRequest.add(
+               new FileBlockRequestMessage(fsr.getHash(), i, (int) Math.min(i + BLOCK_SIZE, fsr.getTamanho()) - i));
          numBlocks++;
       }
-      System.out.println("DownloadTaskManager created with "+numBlocks+" blocks to download.");
-      synchronized(this){
+      System.out.println("DownloadTaskManager created with " + numBlocks + " blocks to download.");
+      synchronized (this) {
          this.notifyAll();
       }
    }
-    
+
 }

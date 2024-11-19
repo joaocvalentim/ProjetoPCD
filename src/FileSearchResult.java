@@ -30,7 +30,6 @@ public class FileSearchResult {
       this.porta = porta;
    }
 
-
    public WordSearchMessage getWordSearchMessage() {
       return wordSearchMessage;
    }
@@ -55,11 +54,8 @@ public class FileSearchResult {
       return tamanho;
    }
 
-   
-   
    @Override
    public String toString() {
-      // TODO Auto-generated method stub
       return "Nome: " + this.nome + " | Endereço: " + this.endereco + " | Porta: " + this.porta;
    }
 

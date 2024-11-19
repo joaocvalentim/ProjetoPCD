@@ -9,10 +9,10 @@ package src;
     Métodos: Não especificado.
  */
 public class FileBlockRequestMessage {
-   //private final int BLOCK_SIZE = 1024;
+   // private final int BLOCK_SIZE = 1024;
    private String hash;
    private int offset;
-   private int length; 
+   private int length;
 
    public FileBlockRequestMessage(String hash, int offset, int length) {
       this.hash = hash;
@@ -34,6 +34,6 @@ public class FileBlockRequestMessage {
 
    @Override
    public String toString() {
-      return "FileBlockRequestMessage{" + "hash='" + hash + '\'' +", offset=" + offset +", length=" + length +'}';
+      return "FileBlockRequestMessage{" + "hash='" + hash + '\'' + ", offset=" + offset + ", length=" + length + '}';
    }
 }
