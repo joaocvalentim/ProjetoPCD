@@ -16,16 +16,18 @@ public class DownloadTasksManager {
    private int numBlocksReceived = 0;
 
    public DownloadTasksManager(FileSearchResult fsr) {
+
+      // Cria uma lista de pedidos de blocos de ficheiros
       blockRequest = new ArrayList<FileBlockRequestMessage>();
+      //divide o ficheiro em blocos de 1024 bytes
       for (int i = 0; i < fsr.getTamanho(); i += BLOCK_SIZE) {
-         blockRequest.add(
-               new FileBlockRequestMessage(fsr.getHash(), i, (int) Math.min(i + BLOCK_SIZE, fsr.getTamanho()) - i));
+         blockRequest.add(new FileBlockRequestMessage(fsr.getHash(), i, (int) Math.min(i + BLOCK_SIZE, fsr.getTamanho()) - i));
          numBlocks++;
       }
       System.out.println("DownloadTaskManager created with " + numBlocks + " blocks to download.");
-      synchronized (this) {
-         this.notifyAll();
-      }
+
+      //notifica que o download pode começar (nao sei se devia ser aqui- acho que esta classe tb faz o download)
+      this.notifyAll();
    }
 
 }

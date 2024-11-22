@@ -55,10 +55,8 @@ public class IscTorrentGUI {
     private JTextField addressField; // Endereço do nó
     private JTextField portField; // Porta do nó
 
-    public IscTorrentGUI(Node node, WordSearchMessage[] wordSearchMessages) { // folderPath é o caminho para a pasta
-                                                                              // onde estão as músicas (endereco+porta
-                                                                              // do node)
-        this.wordSearchMessages = wordSearchMessages;
+    public IscTorrentGUI(Node node) { // folderPath é o caminho para a pasta
+                                                                              
         this.node = node;
         // Inicializa a janela principal
         this.mainFrame = new JFrame(node.getFolderPath()); // nome da janela principal é o caminho para a pasta onde
@@ -111,18 +109,16 @@ public class IscTorrentGUI {
                 if (searchKeyword.getText().isEmpty())
                     JOptionPane.showMessageDialog(null, "Insira uma palavra-chave!");
                 else {
-                    node.sendSearchRequest(searchKeyword.getText()); // enviar a palavra-chave para o nó
-                    try {
-                        Thread.sleep(10); // esperar um pouco para receber os resultados
-                    } catch (InterruptedException e1) {
-                        e1.printStackTrace();
-                    }
+                    node.startSearch(searchKeyword.getText()); // enviar a palavra-chave para o nó
                     if (node.getSearchResults().isEmpty())
-                        JOptionPane.showMessageDialog(null, "Não foram encontrados resultados para a pesquisa!");
-                    resultList.setListData(node.getSearchResults().toArray(new FileSearchResult[0])); // meter isto mais
-                                                                                                      // bonito -
-                                                                                                      // solução copilot
-                    node.resetSearchResults(); // resetar os resultados da pesquisa
+                        try {
+                            Thread.sleep(10);
+                        } catch (InterruptedException e1) {
+                            // TODO Auto-generated catch block
+                            e1.printStackTrace();
+                        }
+                        //JOptionPane.showMessageDialog(null, "Não foram encontrados resultados para a pesquisa!");
+                    resultList.setListData(node.getSearchResults().toArray(new FileSearchResult[0]));
 
                 }
             }
