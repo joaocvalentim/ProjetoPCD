@@ -1,33 +1,105 @@
 package src;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.Serializable;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+
 
 /*  Pagina 7 e 8 do enunciado
  *  Objetivo: Gerir e coordenar as tarefas de descarregamento de blocos de ficheiros.
     Atributos/Métodos: Deve coordenar múltiplas threads de descarregamento. Gerencia a lista de blocos a descarregar, e controla o envio de novos pedidos apenas após a recepção do bloco anterior.
  */
 
-public class DownloadTasksManager {
+public class DownloadTasksManager implements Serializable {
 
-   private final int BLOCK_SIZE = 1024;
-   private List<FileBlockRequestMessage> blockRequest;
-   private int numBlocks;
-   private int numBlocksReceived = 0;
+   
+   private int numBlocksSent = 0; //numero de blocos enviados
+   private int numBlocksReceived = 0; //numero de blocos recebidos
+
+   private BlockingQueue<FileBlockRequestMessage> fileBlockRequestMessages; //lista onde vão ser adicionados os pedidos
+   private BlockingQueue<FileBlockAnswerMessage> fileBlockAnswerMessages ; //lista onde vão ser adicionadas as respostas
+   private FileSearchResult fsr;
+
+
+
+   
 
    public DownloadTasksManager(FileSearchResult fsr) {
+      this.fileBlockRequestMessages = new LinkedBlockingQueue<FileBlockRequestMessage>();
+      this.fileBlockAnswerMessages = new LinkedBlockingQueue<FileBlockAnswerMessage>();
+      this.fsr = fsr;
+   }
 
-      // Cria uma lista de pedidos de blocos de ficheiros
-      blockRequest = new ArrayList<FileBlockRequestMessage>();
-      //divide o ficheiro em blocos de 1024 bytes
-      for (int i = 0; i < fsr.getTamanho(); i += BLOCK_SIZE) {
-         blockRequest.add(new FileBlockRequestMessage(fsr.getHash(), i, (int) Math.min(i + BLOCK_SIZE, fsr.getTamanho()) - i));
-         numBlocks++;
+
+
+   //adiciona um pedido (FBRM) à lista de pedidos
+   /*public synchronized void putRequestMessage(FileBlockRequestMessage fbrm) throws InterruptedException{
+      if (fbrm != null) {
+         fileBlockRequestMessages.put(fbrm);
+         numBlocksSent++;
+         this.notifyAll();
       }
-      System.out.println("DownloadTaskManager created with " + numBlocks + " blocks to download.");
+   }*/
 
-      //notifica que o download pode começar (nao sei se devia ser aqui- acho que esta classe tb faz o download)
-      this.notifyAll();
+   public void putRequestMessage(FileBlockRequestMessage fbrm) throws InterruptedException{
+      fileBlockRequestMessages.put(fbrm);
+      numBlocksSent++;
+   }
+
+   //tira a 1ª mensagem (FBRM) da lista de pedidos
+   /*public synchronized FileBlockRequestMessage takeRequestMessage(){
+      try {
+         while(fileBlockRequestMessages.isEmpty()) {
+            this.wait();
+         }
+         //condicao para agir -> notEmpty
+         FileBlockRequestMessage fbrm = fileBlockRequestMessages.remove(0);
+         //notificar fbrm retirado
+         //interessados -> RequestProcessor??
+         this.notifyAll();
+
+         return fbrm;
+         
+      } catch (Exception e) {
+         e.printStackTrace();
+      }
+      return null;
+      
+   }*/
+   public FileBlockRequestMessage takeRequestMessage() throws InterruptedException{
+      FileBlockRequestMessage fbrm = fileBlockRequestMessages.take(); 
+      return fbrm;
+   }
+
+
+
+
+   public void putAnswerMessage(FileBlockAnswerMessage fbam) throws InterruptedException{
+      System.out.println("DownloadTasksManager: putAnswerMessage");
+      fileBlockAnswerMessages.put(fbam);
+      numBlocksReceived++;
+   }
+   
+
+   public FileBlockAnswerMessage takeAnswerMessage() throws InterruptedException{
+      FileBlockAnswerMessage fbam = fileBlockAnswerMessages.take();
+      System.out.println("DownloadTasksManager: takeAnswerMessage");
+      return fbam;
+   }
+
+
+   public BlockingQueue<FileBlockRequestMessage> getFileBlockRequestMessages() {
+      return fileBlockRequestMessages;
+   }
+
+   public BlockingQueue<FileBlockAnswerMessage> getFileBlockAnswerMessages() {
+      return fileBlockAnswerMessages;
+   }
+
+   public FileSearchResult getFsr() {
+      return fsr;
    }
 
 }
+   

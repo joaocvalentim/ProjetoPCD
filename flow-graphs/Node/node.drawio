@@ -1,0 +1,138 @@
+<mxfile host="65bd71144e">
+    <diagram id="h-BfdQIMzwZHKCRaaB8J" name="Page-1">
+        <mxGraphModel dx="1205" dy="878" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="none" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="&lt;h1&gt;Classe Node&lt;/h1&gt;&lt;p&gt;Explicação geral das funções/métodos da classe Node&lt;/p&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=20;" parent="1" vertex="1">
+                    <mxGeometry x="46" y="20" width="520" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="Node ( Port, addres, folderpath )" style="rounded=1;whiteSpace=wrap;html=1;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=20;" parent="1" vertex="1">
+                    <mxGeometry x="46" y="190" width="320" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="" style="curved=1;endArrow=classic;html=1;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=16;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;" parent="1" source="5" target="7" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="426" y="440" as="sourcePoint"/>
+                        <mxPoint x="496" y="260" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="126" y="280"/>
+                            <mxPoint x="126" y="300"/>
+                            <mxPoint x="276" y="290"/>
+                            <mxPoint x="406" y="300"/>
+                            <mxPoint x="396" y="220"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="7" value="Inicializa os atributos do Node, e abre o seu serverSocket (NodeServer) para receber conexões" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=20;" parent="1" vertex="1">
+                    <mxGeometry x="486" y="230" width="320" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="newConnection ( Port, Address )" style="rounded=1;whiteSpace=wrap;html=1;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=20;fillColor=#1ba1e2;fontColor=#000000;strokeColor=#006EAF;" parent="1" vertex="1">
+                    <mxGeometry x="46" y="350" width="320" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="" style="curved=1;endArrow=classic;html=1;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=16;exitX=0.25;exitY=1;exitDx=0;exitDy=0;fillColor=#1ba1e2;strokeColor=#006EAF;" parent="1" source="8" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="426" y="600" as="sourcePoint"/>
+                        <mxPoint x="476" y="405" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="126" y="440"/>
+                            <mxPoint x="126" y="455"/>
+                            <mxPoint x="286" y="435"/>
+                            <mxPoint x="356" y="445"/>
+                            <mxPoint x="396" y="410"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="10" value="Função chamada pela GUI para iniciar uma conexão com outro nó" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=20;" parent="1" vertex="1">
+                    <mxGeometry x="486" y="390" width="260" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" style="edgeStyle=none;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=16;fillColor=#60a917;strokeColor=#2D7600;" parent="1" source="11" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="206.30769230769215" y="605.0000000000002" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="11" value="sendMessage (Connection, Message)" style="rounded=1;whiteSpace=wrap;html=1;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=20;fillColor=#60a917;fontColor=#000000;strokeColor=#2D7600;" parent="1" vertex="1">
+                    <mxGeometry x="46" y="485" width="320" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="Envia um objecto para determinado Node" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=20;" parent="1" vertex="1">
+                    <mxGeometry x="76" y="615" width="260" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" style="edgeStyle=none;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=16;fillColor=#60a917;strokeColor=#2D7600;" parent="1" source="19" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="606" y="590" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="19" value="HandleMessage ( Socket, Message)" style="rounded=1;whiteSpace=wrap;html=1;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=20;fillColor=#60a917;fontColor=#000000;strokeColor=#2D7600;" parent="1" vertex="1">
+                    <mxGeometry x="446" y="485" width="320" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" value="Consoante o tipo de mensagem vai realizar diferentes ações" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=20;" parent="1" vertex="1">
+                    <mxGeometry x="476" y="620" width="260" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="21" value="" style="shape=flexArrow;endArrow=classic;startArrow=classic;html=1;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=16;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fillColor=#60a917;strokeColor=#2D7600;" parent="1" source="11" target="19" edge="1">
+                    <mxGeometry width="100" height="100" relative="1" as="geometry">
+                        <mxPoint x="436" y="670" as="sourcePoint"/>
+                        <mxPoint x="536" y="570" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="22" style="edgeStyle=none;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=16;fillColor=#6a00ff;strokeColor=#3700CC;" parent="1" source="23" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="176" y="790" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="23" value="startSearch ( Keyword )" style="rounded=1;whiteSpace=wrap;html=1;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=20;fillColor=#6a00ff;fontColor=#000000;strokeColor=#3700CC;" parent="1" vertex="1">
+                    <mxGeometry x="46" y="690" width="260" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="24" value="Cria WSM e envia para os nós connectados" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=20;" parent="1" vertex="1">
+                    <mxGeometry x="46" y="810" width="260" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="25" style="edgeStyle=none;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=16;fillColor=#6a00ff;strokeColor=#3700CC;" parent="1" source="26" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="466" y="790" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="26" value="searchFiles ( WSM )" style="rounded=1;whiteSpace=wrap;html=1;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=20;fillColor=#6a00ff;fontColor=#000000;strokeColor=#3700CC;" parent="1" vertex="1">
+                    <mxGeometry x="366" y="690" width="200" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="27" value="Vai ver se contem esse ficheiro na sua folder" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=20;" parent="1" vertex="1">
+                    <mxGeometry x="326" y="810" width="260" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="28" value="" style="shape=flexArrow;endArrow=classic;startArrow=classic;html=1;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=16;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fillColor=#6a00ff;strokeColor=#3700CC;" parent="1" source="23" target="26" edge="1">
+                    <mxGeometry width="100" height="100" relative="1" as="geometry">
+                        <mxPoint x="436" y="875" as="sourcePoint"/>
+                        <mxPoint x="536" y="775" as="targetPoint"/>
+                        <Array as="points"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="31" style="edgeStyle=none;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=16;fillColor=#6a00ff;strokeColor=#3700CC;" parent="1" source="32" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="719" y="790.0000000000002" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="32" value="updateFSR( FSR )" style="rounded=1;whiteSpace=wrap;html=1;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=20;fillColor=#6a00ff;fontColor=#000000;strokeColor=#3700CC;" parent="1" vertex="1">
+                    <mxGeometry x="619" y="690" width="200" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="33" value="Para a GUI atualizar" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=20;" parent="1" vertex="1">
+                    <mxGeometry x="606" y="810" width="243" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="34" value="" style="shape=flexArrow;endArrow=classic;startArrow=classic;html=1;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=16;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fillColor=#6a00ff;strokeColor=#3700CC;" parent="1" source="26" target="32" edge="1">
+                    <mxGeometry width="100" height="100" relative="1" as="geometry">
+                        <mxPoint x="559" y="720.0000000000002" as="sourcePoint"/>
+                        <mxPoint x="789" y="775" as="targetPoint"/>
+                        <Array as="points"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="35" value="Download" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=20;fillColor=#d80073;fontColor=#000000;strokeColor=#A50040;" parent="1" vertex="1">
+                    <mxGeometry x="211" y="880" width="375" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="38" value="Inicia um DownloadTaskManager (objeto partilhado com o objetivo de&amp;nbsp; gerenciar o download de ficheiros). Inicia uma thread DtmHandler para tratar do envio de FBRM, transformação de FBRM para FBAM e transformação de uma lista de FBAM em um ficheiro&amp;nbsp;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=20;" parent="1" vertex="1">
+                    <mxGeometry x="46" y="1040" width="770" height="10" as="geometry"/>
+                </mxCell>
+                <mxCell id="40" value="" style="endArrow=classic;html=1;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=16;exitX=0.5;exitY=1;exitDx=0;exitDy=0;fillColor=#d80073;strokeColor=#A50040;" parent="1" source="35" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="486" y="910" as="sourcePoint"/>
+                        <mxPoint x="399" y="990" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
