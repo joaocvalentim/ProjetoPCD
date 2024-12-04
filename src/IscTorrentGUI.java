@@ -45,7 +45,6 @@ import java.io.IOException;
  */
 public class IscTorrentGUI {
     private Node node; // Nó ao qual a GUI está conectada
-    public WordSearchMessage[] wordSearchMessages;
 
     private JFrame mainFrame; // Janela principal (dividida em paineis)
     private JTextField searchKeyword; // Palavra-chave a ser pesquisada
@@ -55,8 +54,8 @@ public class IscTorrentGUI {
     private JTextField addressField; // Endereço do nó
     private JTextField portField; // Porta do nó
 
-    public IscTorrentGUI(Node node) { // folderPath é o caminho para a pasta
-                                                                              
+    public IscTorrentGUI(Node node) {
+
         this.node = node;
         // Inicializa a janela principal
         this.mainFrame = new JFrame(node.getFolderPath()); // nome da janela principal é o caminho para a pasta onde
@@ -75,6 +74,17 @@ public class IscTorrentGUI {
         this.connectFrame.pack();
     }
 
+    /**************************************************************************
+     **************************************************************************
+     ************************************************************************** 
+     * 
+     * Ecrã principal
+     * 
+     * pesquisar palavra-chave / escolher ficheiro para descarregar / abrir ecrã
+     * secundário
+     *************************************************************************
+     *************************************************************************
+     *************************************************************************/
     private void addMainFrameContent() {
         // Formatar a janela principal
         mainFrame.setSize(800, 400);
@@ -114,10 +124,10 @@ public class IscTorrentGUI {
                         try {
                             Thread.sleep(10);
                         } catch (InterruptedException e1) {
-                            // TODO Auto-generated catch block
                             e1.printStackTrace();
                         }
-                        //JOptionPane.showMessageDialog(null, "Não foram encontrados resultados para a pesquisa!");
+                    // JOptionPane.showMessageDialog(null, "Não foram encontrados resultados para a
+                    // pesquisa!");
                     resultList.setListData(node.getSearchResults().toArray(new FileSearchResult[0]));
 
                 }
@@ -145,7 +155,8 @@ public class IscTorrentGUI {
                     JOptionPane.showMessageDialog(null, "Estão vários itens selecionados!");
                 else {
                     FileSearchResult fsr = resultList.getSelectedValue();
-                    node.sendDownloadRequest(fsr); // enviar o pedido de download para o nó
+                    // node.sendDownloadRequest(fsr); // enviar o pedido de download para o nó
+                    node.startDownload(fsr);
                 }
             }
         });
@@ -161,6 +172,16 @@ public class IscTorrentGUI {
         buttonPanel.add(connectButton);
     }
 
+    /**************************************************************************
+     **************************************************************************
+     ************************************************************************** 
+     * 
+     * Ecrã secundário
+     * 
+     * inserir endereço e porta do nó / ligar a nó / cancelar
+     *************************************************************************
+     *************************************************************************
+     *************************************************************************/
     private void addConnectFrameContent() {
         connectFrame.setSize(800, 100);
         connectFrame.setResizable(false);

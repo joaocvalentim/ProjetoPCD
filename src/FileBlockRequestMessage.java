@@ -8,16 +8,24 @@ package src;
     length: Número de bytes a ler.
     Métodos: Não especificado.
  */
-public class FileBlockRequestMessage {
+
+import java.io.Serializable;
+
+public class FileBlockRequestMessage implements Serializable {
    // private final int BLOCK_SIZE = 1024;
    private String hash;
    private int offset;
    private int length;
+   private String requestAddress;
+   private int requestPort;
 
-   public FileBlockRequestMessage(String hash, int offset, int length) {
+   public FileBlockRequestMessage(String hash, int offset, int length, String requestAddress, int requestPort) {
       this.hash = hash;
       this.offset = offset;
       this.length = length;
+      this.requestAddress = requestAddress;
+      this.requestPort = requestPort;
+      
    }
 
    public String getHash() {
@@ -32,6 +40,14 @@ public class FileBlockRequestMessage {
       return length;
    }
 
+   public String getRequestAddress() {
+      return requestAddress;
+   }
+
+   public int getRequestPort() {
+      return requestPort;
+   }
+   
    @Override
    public String toString() {
       return "FileBlockRequestMessage{" + "hash='" + hash + '\'' + ", offset=" + offset + ", length=" + length + '}';
