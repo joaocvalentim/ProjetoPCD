@@ -1,23 +1,23 @@
 package src;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Node {
     private int port; // porta do nó
     private String address; // endereço do nó
     private String folderPath; // pasta com os ficheiros do nó
-
+    private IscTorrentGUI GUI; // interface gráfica do nó
     //cenas para conexao entre nós
     private List<Socket> connections; // lista de sockets connectado
     private NodeServer server; // server dedicado ao nó - sempre À espera de receber conexões
@@ -32,10 +32,10 @@ public class Node {
     // cenas para download
     private static final int BLOCK_SIZE = 1024; //tamanho max dum FBRM - Transformar FSR em FBRM
     private DownloadTasksManager dtm; //objeto partilhado entre nodes para download de ficheiros
-
-   
-    private Map<FileSearchResult, DownloadTasksManager> dtmByFsrHash = new ConcurrentHashMap<>(); //TODO PASSAR FILESEARCHRESULT PARA HASH
+    private ExecutorService downloadThreadPool = Executors.newFixedThreadPool(5); //pool de threads para download
     
+    
+
 
     /**************************************************************************
      **************************************************************************
@@ -54,6 +54,10 @@ public class Node {
         this.connections = new ArrayList<Socket>();
         this.searchResults = new ArrayList<FileSearchResult>();
 
+        this.GUI = new IscTorrentGUI(this);
+        GUI.open();
+
+
         this.server = new NodeServer(this);
         this.server.start();
 
@@ -69,24 +73,6 @@ public class Node {
      *************************************************************************
      *************************************************************************
      *************************************************************************/
-
-    /*public void newConnection(String address1, int port1) throws IOException {
-        System.out.println("Node - " + folderPath + " - A tentar connectar ao nó " + address1 + ":" + port1);
-        Socket connection = new Socket(address1, port1);
-        ObjectOutputStream output = new ObjectOutputStream(connection.getOutputStream());
-        output.flush();
-        
-        
-        outputStreams.put(connection, output);
-        // ObjectInputStream input = new ObjectInputStream(connection.getInputStream());
-        connections.add(connection);
-        System.out.println("CARALHO" + address1 + ":" + port1);
-        connectionId.put(address1 + ":" + port1, connection);
-        System.out.println("Node - " + folderPath + " - Conexão estabelecida com " + address1 + ":" + port1);
-        
-        
-        sendMessage(connection, new NewConnectionRequest(this.address, this.port));
-    }*/
     public void newConnection(String address1, int port1) throws IOException {
 
         System.out.println("Node - " + folderPath + " - A tentar connectar ao nó " + address1 + ":" + port1);
@@ -167,7 +153,23 @@ public class Node {
             System.out.println("Node - " + folderPath + " - Resultado de busca recebido: " + result.getNome()+ " - a atualizar a gui");
             updateSearchResults(result);
             
-        }else if (message instanceof DownloadTasksManager) {
+        } else if (message instanceof FileBlockRequestMessage){
+            FileBlockRequestMessage request = (FileBlockRequestMessage) message;
+            System.out.println("Node - " + folderPath + " - Pedido de bloco de ficheiro recebido.");
+            this.downloadThreadPool.submit(new AnwserSender(request, this));
+
+        } else if (message instanceof FileBlockAnswerMessage){
+            System.out.println("Node - " + folderPath + " - Resposta de bloco de ficheiro recebida.");
+            try {
+                FileBlockAnswerMessage answer = (FileBlockAnswerMessage) message;
+                dtm.putAnswerMessage(answer);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        
+        /*else if (message instanceof DownloadTasksManager) {
             System.out.println("Node - " + folderPath + " - DownloadTasksManager recebido.");
             this.dtm = (DownloadTasksManager) message;
 
@@ -175,7 +177,7 @@ public class Node {
             dtmByFsrHash.put(dtm.getFsr(), dtm);
             DtmHandler dtmHandler = new DtmHandler(this, dtm, null);
             dtmHandler.start();
-        }else
+        }*/else
             System.err.println("ESTOU A RECEBER UMA MERDA ATOA");
             
     }
@@ -244,18 +246,16 @@ public class Node {
         if(searchResults.isEmpty()){
             searchResults.add(result);
             System.out.println("Node - " + folderPath + " - Resultado de busca: " + result.getNome());
-            return;
         }else{
             for (FileSearchResult fsr : searchResults) {
                 if(fsr.getHash().equals(result.getHash())){
+                    fsr.addNode(result.getEndereco().get(0), result.getPorta().get(0));;
                     return;
                 }
             }
             searchResults.add(result);
             System.out.println("Node - " + folderPath + " - Resultado de busca: " + result.getNome());
-
         }
-
     }
 
     /**************************************************************************
@@ -275,105 +275,70 @@ public class Node {
      */
     public void startDownload(FileSearchResult fsr) {
         System.out.println("quero iniciar download madje");
-        this.dtm = new DownloadTasksManager(fsr);
-        dtmByFsrHash.put(fsr, dtm);
-
-        List<FileBlockRequestMessage> requestMessages = fsrToFbrm(fsr);
-        /*for (Socket connection : connections) {
-            sendMessage(connection, dtm);
-        }*/
-        DtmHandler dtmHandler = new DtmHandler(this, dtm, requestMessages);
-        dtmHandler.start();
-
-    }
-
-    // esta funcão divide o fileSearchResult em blocos de tamanho BLOCK_SIZE e cria
-    // um FileBlockRequestMessage para cada bloco
-    public synchronized List<FileBlockRequestMessage> fsrToFbrm(FileSearchResult fsr) {
-        List<FileBlockRequestMessage> requestMessages = new ArrayList<FileBlockRequestMessage>();
+        
+        List<FileBlockRequestMessage> requestMessages =  new ArrayList<FileBlockRequestMessage>();
         for (int i = 0; i < fsr.getTamanho(); i += BLOCK_SIZE) {
-            // requestMessages.add(new FileBlockRequestMessage(this.fsr.getHash(), i, (int)
-            // Math.min(i + BLOCK_SIZE, this.fsr.getTamanho()) - i, this.fsr));
-            requestMessages.add(new FileBlockRequestMessage(fsr.getHash(), i,(int) Math.min(BLOCK_SIZE, fsr.getTamanho() - i)));
+            requestMessages.add(new FileBlockRequestMessage(fsr.getHash(), i,(int) Math.min(BLOCK_SIZE, fsr.getTamanho() - i), this.address, this.port));
         }
-        return requestMessages;
+
+        this.dtm = new DownloadTasksManager(requestMessages, this);
+        //dtmByFsrHash.put(requestMessages.get(0).getHash(), dtm); //ver para que é que é esta merda
+
+        Thread [] RequestSenders = new Thread[fsr.getEndereco().size()];
+
+        for (int i = 0; i < fsr.getEndereco().size(); i++) {
+            RequestSenders[i] = new RequestSender(fsr.getEndereco().get(i), fsr.getPorta().get(i), dtm, this);
+            RequestSenders[i].start();
+        }
+
     }
 
-    
-    public static class DtmHandler extends Thread {
-        private Node node;
+
+    private static class RequestSender extends Thread {
+        private String address;
+        private int port;
         private DownloadTasksManager dtm;
-        private int numBlocksReceived = 0;
-        private int numBlocksSent = 0;
-        private List<FileBlockRequestMessage> requestList = new ArrayList<FileBlockRequestMessage>();
-        private List<FileBlockAnswerMessage> answerList = new ArrayList<FileBlockAnswerMessage>();
+        private Node node;
 
-        public DtmHandler(Node node, DownloadTasksManager dtm, List<FileBlockRequestMessage> requestList) {
-            this.node = node;
+        public RequestSender(String address, int port, DownloadTasksManager dtm, Node node) {
+            this.address = address;
+            this.port = port;
             this.dtm = dtm;
-            
-            if (requestList != null)
-                this.requestList.addAll(requestList);
-
+            this.node = node;
         }
 
         @Override
-        public void run() {
-            try {
-                System.out.println("Node - " + node.folderPath + " - DtmHandler iniciado.");
-                while (true) {
-                    // se for iniciado como request
-                    if (!this.requestList.isEmpty()) {
-                        // adiciona todos os pedidos à lista de pedidos do dtm
-                        for (FileBlockRequestMessage fbrm : requestList) {
-                            System.out.println("Node - " + node.folderPath + " - Pedido de bloco de ficheiro adicionado ao dtm.");
-                            dtm.putRequestMessage(fbrm);
-                            this.numBlocksSent++;
-                        }
-                        //envia o dtm para todos os nós conectados
-                        for (Socket connection : node.connections) {
-                            node.sendMessage(connection, dtm);
-                        }
-
-                        while (numBlocksReceived < numBlocksSent) {
-                            System.out.println("Node - " + node.folderPath + " - Resposta de bloco de ficheiro recebida.");
-                            FileBlockAnswerMessage fbam = dtm.takeAnswerMessage();
-                            answerList.add(fbam);
-                            this.numBlocksReceived++;   
-                        }
-
-                        // ordenar a lista
-                        System.out.println("Node - " + node.folderPath + " - A ordenar a lista de respostas.");
-                        orderMessages(answerList);
-                        // criar ficheiro
-                        createFile();
-
-                        answerList.clear();
-                        requestList.clear();
-
-                        // se for iniciado como answer
-                    } else if (this.requestList.isEmpty()) {
-                        // vai percorrer todos os request do dtm
-                        for (int i= 0; i!=dtm.getFileBlockRequestMessages().size(); i++) {
-                            // transforma o request em answer
-                            FileBlockRequestMessage request = dtm.takeRequestMessage();
-                            FileBlockAnswerMessage fbam = fbrmToFbam(request);
-                            // adiciona o answer à lista de respostas do dtm
-                            if (fbam != null) {
-                                dtm.putAnswerMessage(fbam);
-                            }
-                        }
-                        System.out.println("Node - " + node.folderPath + " - Respostas de bloco de ficheiro enviadas. TODAS.");
-                        
-                    }
-
+        public synchronized void run() {
+            while(dtm.getFileBlockRequestMessages().size() > 0){
+                try {
+                    Socket connection = node.connectionId.get(address + ":" + port);
+                    FileBlockRequestMessage request = dtm.takeRequestMessage();
+                    node.sendMessage(connection, request);
+                    //System.out.println("Node - " + " - Pedido de download enviado para " + address + ":" + port);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
+            System.err.println("acabei de enviar esta merda toda");
+        }
+    }
+
+    private static class AnwserSender extends Thread{
+
+        private FileBlockRequestMessage request;
+        private Node node;
+
+        public AnwserSender(FileBlockRequestMessage request, Node node) {
+            this.request = request;
+            this.node = node;
         }
 
-
+        @Override
+        public synchronized void run() {
+            FileBlockAnswerMessage answer = fbrmToFbam(request);
+            Socket connection = node.connectionId.get(request.getRequestAddress() + ":" + request.getRequestPort());
+            node.sendMessage(connection, answer);
+        }
 
         public FileBlockAnswerMessage fbrmToFbam(FileBlockRequestMessage fbrm) {
             try {
@@ -383,7 +348,7 @@ public class Node {
                 for (FileSearchResult fsr : node.myFiles){
                     if(fsr.getHash().equals(fbrm.getHash())){
                         RandomAccessFile originFile = new RandomAccessFile(node.folderPath + "/" + fsr.getNome(), "r");
-                        System.out.println("Node - " + node.folderPath + " - tou a fazer um answerBlock de : " + fsr.getNome());
+                        //System.out.println("Node - " + node.folderPath + " - tou a fazer um answerBlock de : " + fsr.getNome());
                         originFile.seek(fbrm.getOffset());
                         originFile.read(data, 0, fbrm.getLength());
                         originFile.close();
@@ -398,27 +363,9 @@ public class Node {
             }
             return null;
         }
-
-        // ordena a lista de respostas por ordem de bloco
-        public void orderMessages(List<FileBlockAnswerMessage> answerList) {
-            answerList.sort(Comparator.comparing(FileBlockAnswerMessage::getOffset));
-        }
-
-        // cria o ficheiro a partir dos blocos recebidos
-        public synchronized void createFile() {
-            try {
-                FileOutputStream file = new FileOutputStream(node.getFolderPath() + "/" + dtm.getFsr().getNome());
-                for (FileBlockAnswerMessage fbam : answerList) {
-                    file.write(fbam.getData());
-                }
-                file.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
     }
 
+    
     /**************************************************************************
      **************************************************************************
      ************************************************************************** 

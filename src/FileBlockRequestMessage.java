@@ -16,11 +16,15 @@ public class FileBlockRequestMessage implements Serializable {
    private String hash;
    private int offset;
    private int length;
+   private String requestAddress;
+   private int requestPort;
 
-   public FileBlockRequestMessage(String hash, int offset, int length) {
+   public FileBlockRequestMessage(String hash, int offset, int length, String requestAddress, int requestPort) {
       this.hash = hash;
       this.offset = offset;
       this.length = length;
+      this.requestAddress = requestAddress;
+      this.requestPort = requestPort;
       
    }
 
@@ -34,6 +38,14 @@ public class FileBlockRequestMessage implements Serializable {
 
    public int getLength() {
       return length;
+   }
+
+   public String getRequestAddress() {
+      return requestAddress;
+   }
+
+   public int getRequestPort() {
+      return requestPort;
    }
    
    @Override

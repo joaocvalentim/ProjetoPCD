@@ -11,10 +11,8 @@ public class MainNode1 {
     public static void main(String[] args) throws IOException {
         
         Node node = new Node(port, address, folderPath);
-
         // IscTorrentGUI gui = new IscTorrentGUI(node);
-        IscTorrentGUI gui = new IscTorrentGUI(node);
-        gui.open();
+
 
     }
 }

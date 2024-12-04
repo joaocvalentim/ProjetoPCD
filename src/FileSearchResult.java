@@ -3,7 +3,9 @@ package src;
 import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Formatter;
+import java.util.List;
 
 /* Pagina 2 e 3 do enunciado
  *  Objetivo: Contém os resultados de uma pesquisa de ficheiros, detalhando quais nós têm o ficheiro solicitado.
@@ -22,16 +24,15 @@ public class FileSearchResult implements Serializable{
    private String hash;
    private long tamanho;
    private String nome;
-   private String endereco; 
-   private int porta;
-   
+   private List<String> endereco = new ArrayList<String>(); 
+   private List<Integer> porta = new ArrayList<Integer>();   
    //construtor normal - usado para criar um FileSearchResult a partir de uma mensagem de procura
    public FileSearchResult(WordSearchMessage wordSearchMessage, long tamanho, String nome, String endereco, int porta) {
       this.wordSearchMessage = wordSearchMessage;
       this.tamanho = tamanho;
       this.nome = nome;
-      this.endereco = endereco;
-      this.porta = porta;
+      this.endereco.add(endereco);
+      this.porta.add(porta);
 
 
       //Cada ficheiro ter´a um valor de hash associado. Este valor deve ser calculado pelo algoritmo SHA-256, sugerindo-se para tal a utiliza¸c˜ao da classe MessageDigest 2
@@ -69,11 +70,11 @@ public class FileSearchResult implements Serializable{
       return nome;
    }
 
-   public String getEndereco() {
+   public List<String> getEndereco() {
       return endereco;
    }
 
-   public int getPorta() {
+   public List<Integer> getPorta() {
       return porta;
    }
 
@@ -85,9 +86,21 @@ public class FileSearchResult implements Serializable{
       return tamanho;
    }
 
+   public void addNode(String endereco, int porta) {
+      for (int i = 0; i < this.endereco.size(); i++) {
+         if (this.endereco.get(i).equals(endereco) && this.porta.get(i) == porta) {
+            return;
+         }
+      }
+      this.endereco.add(endereco);
+      this.porta.add(porta);
+   }
+
+
+
    @Override
    public String toString() {
-      return "Nome: " + this.nome + " | Endereço: " + this.endereco + " | Porta: " + this.porta;
+      return "Nome: " + this.nome + " | nº de nós: " + this.endereco.size();
    }
 
    public void setWordSearchMessage(WordSearchMessage wordSearchMessage) {

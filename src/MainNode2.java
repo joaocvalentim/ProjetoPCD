@@ -13,8 +13,7 @@ public class MainNode2 {
 
         Node node = new Node(port, address, folderPath);
 
-        IscTorrentGUI gui = new IscTorrentGUI(node);
-        gui.open();
+        
 
     }
 }
