@@ -16,6 +16,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 /*
  * Objetivo: Esta classe gerencia a interface gráfica do usuário, encapsulando todos os elementos e funcionalidades da GUI do sistema.
@@ -91,8 +93,7 @@ public class IscTorrentGUI {
         mainFrame.setSize(800, 400);
         mainFrame.setResizable(false);
         Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize(); // centrar a janela
-        mainFrame.setLocation(dimension.width / 2 - mainFrame.getSize().width / 2,
-                dimension.height / 2 - mainFrame.getSize().height / 2);
+        mainFrame.setLocation(dimension.width / 2 - mainFrame.getSize().width / 2, dimension.height / 2 - mainFrame.getSize().height / 2);
 
         // Adiciona os elementos da janela principal
         // Painel de pesquisa
@@ -127,7 +128,6 @@ public class IscTorrentGUI {
                         } catch (InterruptedException e1) {
                             e1.printStackTrace();
                         }
-                    // JOptionPane.showMessageDialog(null, "Não foram encontrados resultados para a
                     // pesquisa!");
                     resultList.setListData(node.getSearchResults().toArray(new FileSearchResult[0]));
 
@@ -152,11 +152,9 @@ public class IscTorrentGUI {
             public void actionPerformed(ActionEvent e) {
                 if (resultList.isSelectionEmpty())
                     JOptionPane.showMessageDialog(null, "Não está nenhum item selecionado!", "Erro",JOptionPane.ERROR_MESSAGE);
-                else if (resultList.getSelectedIndices().length > 1) // depois meter isto funcional
-                    JOptionPane.showMessageDialog(null, "Estão vários itens selecionados!", "Erro",JOptionPane.ERROR_MESSAGE);
                 else {
-                    FileSearchResult fsr = resultList.getSelectedValue();
-                    // node.sendDownloadRequest(fsr); // enviar o pedido de download para o nó
+                    List<FileSearchResult> fsr = new ArrayList<FileSearchResult>();
+                    fsr.addAll(resultList.getSelectedValuesList());
                     node.startDownload(fsr);
                 }
             }
@@ -192,8 +190,7 @@ public class IscTorrentGUI {
 
         // Adiciona os elementos da janela de conexão com um nó
         JPanel connectPanel = new JPanel();
-        connectPanel.setLayout(new GridLayout(1, 6)); // grid layout para alinhar os elementos horizontalmente - mesmo
-                                                      // tamanho as 4 colunas
+        connectPanel.setLayout(new GridLayout(1, 6)); // grid layout para alinhar os elementos horizontalmente - mesmo tamanho as 4 colunas
         connectFrame.add(connectPanel, BorderLayout.CENTER);
         JLabel addressLabel = new JLabel("  Endereço:");
         connectPanel.add(addressLabel);
@@ -207,6 +204,8 @@ public class IscTorrentGUI {
         cancelButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                addressField.setText("");
+                portField.setText("");
                 connectFrame.setVisible(false);
             }
         });
@@ -219,8 +218,9 @@ public class IscTorrentGUI {
                     JOptionPane.showMessageDialog(null, "Insira o endereço e a porta do nó!", "Erro",JOptionPane.ERROR_MESSAGE);
                 } else {
                     try {
-                        node.newConnection(addressField.getText(), Integer.parseInt(portField.getText())); // ligar ao
-                                                                                                           // nó
+                        node.newConnection(addressField.getText(), Integer.parseInt(portField.getText())); // ligar ao nó
+                        addressField.setText("");
+                        portField.setText("");
                         connectFrame.setVisible(false);
                     } catch (IOException e1) {
                         e1.printStackTrace();

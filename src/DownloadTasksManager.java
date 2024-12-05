@@ -6,7 +6,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /*  Pagina 7 e 8 do enunciado
@@ -22,20 +24,22 @@ public class DownloadTasksManager implements Serializable {
    private BlockingQueue<FileBlockRequestMessage> fileBlockRequestMessages; // lista onde vão ser adicionados os pedidos
    private BlockingQueue<FileBlockAnswerMessage> fileBlockAnswerMessages; // lista onde vão ser adicionadas as respostas
    private Node requesterNode;
+   private Map<String, Integer> requestCounter ; // contador de pedidos de bloco de ficheiro
+
 
    public DownloadTasksManager(List<FileBlockRequestMessage> fileBlockRequestMessages, Node requesterNode) {
       this.fileBlockRequestMessages = new LinkedBlockingQueue<FileBlockRequestMessage>();
       this.fileBlockRequestMessages.addAll(fileBlockRequestMessages);
       this.fileBlockAnswerMessages = new LinkedBlockingQueue<FileBlockAnswerMessage>();
       this.requesterNode = requesterNode;
-
+      requestCounter = new ConcurrentHashMap<String, Integer>();
       Downloader downloader = new Downloader(this);
       downloader.start();
    }
 
    public void putRequestMessage(FileBlockRequestMessage fbrm) throws InterruptedException {
       fileBlockRequestMessages.put(fbrm);
-      // numBlocksSent++;
+
    }
 
    public FileBlockRequestMessage takeRequestMessage() throws InterruptedException {
@@ -46,7 +50,6 @@ public class DownloadTasksManager implements Serializable {
    public void putAnswerMessage(FileBlockAnswerMessage fbam) throws InterruptedException {
       System.out.println("DownloadTasksManager: putAnswerMessage");
       fileBlockAnswerMessages.put(fbam);
-      // numBlocksReceived++;
    }
 
    public FileBlockAnswerMessage takeAnswerMessage() throws InterruptedException {
@@ -62,6 +65,15 @@ public class DownloadTasksManager implements Serializable {
    public BlockingQueue<FileBlockAnswerMessage> getFileBlockAnswerMessages() {
       return fileBlockAnswerMessages;
    }
+
+   public void addRequestCounter(String hash) {
+      if(requestCounter.containsKey(hash)){
+         requestCounter.put(hash, requestCounter.get(hash) + 1);
+      } else {
+         requestCounter.put(hash, 1);
+      }
+   }
+
 
    private static class Downloader extends Thread {
 
@@ -98,7 +110,7 @@ public class DownloadTasksManager implements Serializable {
             e.printStackTrace();
          } finally {
             endTime = System.currentTimeMillis();
-            node.getGUI().downloadFinished(node.getRequestCounter(), (endTime - startTime)/1000);
+            node.getGUI().downloadFinished(downloadTasksManager.requestCounter, (endTime - startTime)/1000);
             //System.out.println("DownloadTasksManager: Acabou" + (endTime - startTime)/1000 + " s");
          }
       }

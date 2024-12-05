@@ -34,10 +34,14 @@ public class Node {
 
     // cenas para download
     private static final int BLOCK_SIZE = 1024; // tamanho max dum FBRM - Transformar FSR em FBRM
-    private DownloadTasksManager dtm; // objeto partilhado entre nodes para download de ficheiros
+    // private DownloadTasksManager dtm; // objeto partilhado entre nodes para
+    // download de ficheiros
     private ExecutorService downloadThreadPool = Executors.newFixedThreadPool(5); // pool de threads para download
-    private Map<String, Integer> requestCounter = new ConcurrentHashMap<String, Integer>(); // contador de pedidos de
-                                                                                            // bloco de ficheiro
+    private Map<String, DownloadTasksManager> dtmByFsrHash = new ConcurrentHashMap<String, DownloadTasksManager>(); // mapa
+                                                                                                                    // de
+                                                                                                                    // DownloadTasksManager
+                                                                                                                    // por
+                                                                                                                    // hash
 
     /**************************************************************************
      **************************************************************************
@@ -76,42 +80,42 @@ public class Node {
      *************************************************************************/
     public void newConnection(String address1, int port1) throws IOException {
 
-        if(address1.equals(this.address) && port1 == this.port){
+        if (address1.equals(this.address) && port1 == this.port) {
             GUI.connectToSelf();
             System.err.println("Node - " + folderPath + " - Não posso conectar-me a mim mesmo.");
             return;
         }
-        try{
+        try {
             System.out.println("Node - " + folderPath + " - A tentar connectar ao nó " + address1 + ":" + port1);
-        
+
             Socket connection = new Socket(address1, port1);
-        
+
             ObjectOutputStream output = new ObjectOutputStream(connection.getOutputStream());
             output.flush();
             outputStreams.put(connection, output);
-        
+
             connections.add(connection);
             System.out.println("CARALHO" + address1 + ":" + port1);
 
             connectionId.put(address1 + ":" + port1, connection);
             System.out.println("Node - " + folderPath + " - Conexão estabelecida com " + address1 + ":" + port1);
-        
+
             sendMessage(connection, new NewConnectionRequest(this.address, this.port));
-        }catch (IOException e){
+        } catch (IOException e) {
             GUI.failedToConnect(address1, port1);
             System.err.println("Node - " + folderPath + " - Erro ao conectar ao nó " + address1 + ":" + port1);
             e.printStackTrace();
         }
     }
 
-    public void stop(){
-        for(Socket connection : connections){
+    public void stop() {
+        for (Socket connection : connections) {
             removeConnection(connection);
         }
     }
 
-    public void removeConnection(Socket connection){
-        try{
+    public void removeConnection(Socket connection) {
+        try {
             for (String key : connectionId.keySet()) {
                 if (connectionId.get(key).equals(connection)) {
                     connectionId.remove(key);
@@ -119,21 +123,21 @@ public class Node {
                     break;
                 }
             }
-            if(outputStreams.containsKey(connection)){
+            if (outputStreams.containsKey(connection)) {
                 outputStreams.get(connection).close();
-                outputStreams.remove(connection);     
+                outputStreams.remove(connection);
             }
             connections.remove(connection);
-            if(!connection.isClosed()){
+            if (!connection.isClosed()) {
                 connection.close();
             }
             System.out.println("Node - " + folderPath + " - Conexão encerrada com node");
-        }catch(IOException e){
-            System.err.println("Node - " + folderPath + " - Erro ao fechar a conexão com " + connection.getInetAddress().getHostName() + ":" + connection.getPort());
+        } catch (IOException e) {
+            System.err.println("Node - " + folderPath + " - Erro ao fechar a conexão com "
+                    + connection.getInetAddress().getHostName() + ":" + connection.getPort());
             e.printStackTrace();
         }
     }
-    
 
     /**************************************************************************
      **************************************************************************
@@ -205,15 +209,16 @@ public class Node {
             System.out.println("Node - " + folderPath + " - Resposta de bloco de ficheiro recebida.");
             try {
                 FileBlockAnswerMessage answer = (FileBlockAnswerMessage) message;
-                dtm.putAnswerMessage(answer);
+                String key = answer.getHash();
+                dtmByFsrHash.get(key).putAnswerMessage(answer);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        }else if(message instanceof String && message.equals("STOP")){
+        } else if (message instanceof String && message.equals("STOP")) {
             System.out.println("Node - " + folderPath + " - Pedido de encerramento de conexão recebido.");
             removeConnection(clientSocket);
         }
-        
+
         else
             System.err.println("ESTOU A RECEBER UMA MERDA ATOA");
 
@@ -313,25 +318,25 @@ public class Node {
      * DownloadTasksManager downloadManager = new DownloadTasksManager(result);
      * }
      */
-    public void startDownload(FileSearchResult fsr) {
-        requestCounter.clear();
+    public void startDownload(List<FileSearchResult> resultsList) {
         System.out.println("quero iniciar download madje");
+        for (FileSearchResult fsr : resultsList) {
+            List<FileBlockRequestMessage> requestMessages = new ArrayList<FileBlockRequestMessage>();
+            for (int i = 0; i < fsr.getTamanho(); i += BLOCK_SIZE) {
+                requestMessages.add(new FileBlockRequestMessage(fsr.getHash(), i,
+                        (int) Math.min(BLOCK_SIZE, fsr.getTamanho() - i), this.address, this.port));
+            }
 
-        List<FileBlockRequestMessage> requestMessages = new ArrayList<FileBlockRequestMessage>();
-        for (int i = 0; i < fsr.getTamanho(); i += BLOCK_SIZE) {
-            requestMessages.add(new FileBlockRequestMessage(fsr.getHash(), i,
-                    (int) Math.min(BLOCK_SIZE, fsr.getTamanho() - i), this.address, this.port));
-        }
+            dtmByFsrHash.put(fsr.getHash(), new DownloadTasksManager(requestMessages, this));
 
-        this.dtm = new DownloadTasksManager(requestMessages, this);
-        // dtmByFsrHash.put(requestMessages.get(0).getHash(), dtm); //ver para que é que
-        // é esta merda
+            Thread[] RequestSenders = new Thread[fsr.getEndereco().size()];
 
-        Thread[] RequestSenders = new Thread[fsr.getEndereco().size()];
+            for (int i = 0; i < fsr.getEndereco().size(); i++) {
+                RequestSenders[i] = new RequestSender(fsr.getEndereco().get(i), fsr.getPorta().get(i),
+                        dtmByFsrHash.get(fsr.getHash()), this);
+                RequestSenders[i].start();
+            }
 
-        for (int i = 0; i < fsr.getEndereco().size(); i++) {
-            RequestSenders[i] = new RequestSender(fsr.getEndereco().get(i), fsr.getPorta().get(i), dtm, this);
-            RequestSenders[i].start();
         }
 
     }
@@ -341,14 +346,12 @@ public class Node {
         private int port;
         private DownloadTasksManager dtm;
         private Node node;
-        private int requestCounter;
 
         public RequestSender(String address, int port, DownloadTasksManager dtm, Node node) {
             this.address = address;
             this.port = port;
             this.dtm = dtm;
             this.node = node;
-            this.requestCounter = 0;
         }
 
         @Override
@@ -357,7 +360,7 @@ public class Node {
                 try {
                     Socket connection = node.connectionId.get(address + ":" + port);
                     FileBlockRequestMessage request = dtm.takeRequestMessage();
-                    requestCounter++;
+                    dtm.addRequestCounter(address + ":" + port);
                     node.sendMessage(connection, request);
                     // System.out.println("Node - " + " - Pedido de download enviado para " +
                     // address + ":" + port);
@@ -365,7 +368,6 @@ public class Node {
                     e.printStackTrace();
                 }
             }
-            node.requestCounter.put(address + ":" + port, requestCounter);
             System.err.println("acabei de enviar esta merda toda");
         }
     }
@@ -414,8 +416,6 @@ public class Node {
         }
     }
 
-
-
     /**************************************************************************
      **************************************************************************
      ************************************************************************** 
@@ -456,10 +456,6 @@ public class Node {
 
     public IscTorrentGUI getGUI() {
         return GUI;
-    }
-
-    public Map<String, Integer> getRequestCounter() {
-        return requestCounter;
     }
 
 }
