@@ -44,27 +44,26 @@ import java.io.IOException;
  * 
  */
 public class IscTorrentGUI {
-    private Node node; // Nó ao qual a GUI está conectada
+    private Node node; // nó ao qual a GUI está conectada
 
-    private JFrame mainFrame; // Janela principal (dividida em paineis)
-    private JTextField searchKeyword; // Palavra-chave a ser pesquisada
-    private JList<FileSearchResult> resultList; // Lista de resultados da pesquisa - confirmar se é este objeto
+    private JFrame mainFrame; // janela principal (dividida em paineis)
+    private JTextField searchKeyword; // palavra-chave a ser pesquisada
+    private JList<FileSearchResult> resultList; // lista de resultados da pesquisa - confirmar se é este objeto
 
-    private JFrame connectFrame; // Janela de conexão com um nó
-    private JTextField addressField; // Endereço do nó
-    private JTextField portField; // Porta do nó
+    private JFrame connectFrame; // janela secundária para conectar a outros nós da rede, onde o utilizador pode inserir o endereço e a porta do nó com o qual deseja se conectar
+    private JTextField addressField; // campo de texto do endereço do nó
+    private JTextField portField; // campo de texto da porta do nó
 
+
+    //CONSTRUTOR
     public IscTorrentGUI(Node node) {
 
-        this.node = node;
-        // Inicializa a janela principal
-        this.mainFrame = new JFrame(node.getFolderPath()); // nome da janela principal é o caminho para a pasta onde
-                                                           // estão as músicas
-        this.mainFrame.setLayout(new BorderLayout()); // border layout para dividir a janela em 2 paineis (tamanho
-                                                      // variável)
-        this.mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Fecha o programa quando a janela principal é
-                                                                       // fechada
-        addMainFrameContent(); // Adiciona os elementos da janela principal
+        this.node = node; //inicializar o node
+        // inicializar a janela principal
+        this.mainFrame = new JFrame(node.getFolderPath()); // nome da janela principal é o caminho para a pasta onde estão as músicas
+        this.mainFrame.setLayout(new BorderLayout()); // border layout para dividir a janela em 2 paineis (tamanho variável)
+        this.mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Fecha o programa quando a janela principal é fechada
+        addMainFrameContent(); // adiciona os elementos da janela principal
 
         // Inicializa a janela de conexão com um nó
         this.connectFrame = new JFrame("Connect");
@@ -87,30 +86,29 @@ public class IscTorrentGUI {
      *************************************************************************/
     private void addMainFrameContent() {
         // Formatar a janela principal
-        mainFrame.setSize(800, 400);
-        mainFrame.setResizable(false);
-        Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize(); // centrar a janela
-        mainFrame.setLocation(dimension.width / 2 - mainFrame.getSize().width / 2,
-                dimension.height / 2 - mainFrame.getSize().height / 2);
+        mainFrame.setSize(800, 400); // define o tamanho da janela
+        mainFrame.setResizable(false); //não é resizable
+        // centrar a janela
+        Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize(); 
+        mainFrame.setLocation(dimension.width/2 - mainFrame.getSize().width/2, dimension.height/2 - mainFrame.getSize().height/2);
 
-        // Adiciona os elementos da janela principal
-        // Painel de pesquisa
+        // adiciona os elementos da janela principal
+        // painel de pesquisa
         JPanel searchPanel = new JPanel();
-        searchPanel.setLayout(new GridLayout(1, 3)); // grid layout para alinhar os elementos horizontalmente - mesmo
-                                                     // tamanho as 3 colunas
+        searchPanel.setLayout(new GridLayout(1, 3)); // grid layout para alinhar os elementos horizontalmente - mesmo tamanho as 3 colunas
         mainFrame.add(searchPanel, BorderLayout.NORTH);
-        // Painel de resultados + botões
+        // painel de resultados + botões
         JPanel resultPanel = new JPanel();
         resultPanel.setLayout(new BorderLayout()); // border layout para dividir a lista de resultados e os botões
         mainFrame.add(resultPanel, BorderLayout.CENTER);
 
-        // Adiciona os elementos do painel de pesquisa
+        // adiciona os elementos do painel de pesquisa
         JLabel searchLabel = new JLabel("  Texto a procurar:");
         searchPanel.add(searchLabel, BorderLayout.WEST);
-        // Campo de texto para inserir a palavra-chave
+        // campo de texto para inserir a palavra-chave
         this.searchKeyword = new JTextField();
         searchPanel.add(searchKeyword, BorderLayout.CENTER);
-        // Botão "Procurar"
+        // botão "Procurar"
         JButton searchButton = new JButton("Procurar");
         searchButton.addActionListener(new ActionListener() {
             @Override
@@ -120,31 +118,30 @@ public class IscTorrentGUI {
                     JOptionPane.showMessageDialog(null, "Insira uma palavra-chave!");
                 else {
                     node.startSearch(searchKeyword.getText()); // enviar a palavra-chave para o nó
-                    if (node.getSearchResults().isEmpty())
+                    if (node.getSearchResults().isEmpty()) // verifica se há resultados e se houver são devolvidos
                         try {
-                            Thread.sleep(10);
+                            Thread.sleep(10); // se os resultados estiverem vazios esperamos 10 ms para dar tempo para processar
                         } catch (InterruptedException e1) {
                             e1.printStackTrace();
                         }
-                    // JOptionPane.showMessageDialog(null, "Não foram encontrados resultados para a
-                    // pesquisa!");
+                    // JOptionPane.showMessageDialog(null, "Não foram encontrados resultados para a pesquisa!");
+                    // atualiza a lista de resultados
                     resultList.setListData(node.getSearchResults().toArray(new FileSearchResult[0]));
-
                 }
             }
         });
         searchPanel.add(searchButton, BorderLayout.EAST);
 
-        // Adiciona os elementos do painel de resultados + botões
-        // Painel de resultados
+        // adiciona os elementos do painel de resultados + botões
+        // painel de resultados
         resultList = new JList<FileSearchResult>(); // confirmar se é este tipo de objeto
 
         resultPanel.add(resultList, BorderLayout.CENTER);
-        // Painel de botões
+        // painel de botões
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(2, 1)); // box layout para alinhar os botões verticalmente
+        buttonPanel.setLayout(new GridLayout(2, 1)); // grid layout para alinhar os botões verticalmente
         resultPanel.add(buttonPanel, BorderLayout.EAST);
-        // Botão "Descarregar"
+        // botão "Descarregar"
         JButton downloadButton = new JButton("Descarregar");
         downloadButton.addActionListener(new ActionListener() {
             @Override
@@ -156,7 +153,7 @@ public class IscTorrentGUI {
                 else {
                     FileSearchResult fsr = resultList.getSelectedValue();
                     // node.sendDownloadRequest(fsr); // enviar o pedido de download para o nó
-                    node.startDownload(fsr);
+                    node.startDownload(fsr); //download do file search result
                 }
             }
         });
@@ -166,6 +163,7 @@ public class IscTorrentGUI {
         connectButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                //torna o conect frame visível
                 connectFrame.setVisible(true);
             }
         });
@@ -183,16 +181,15 @@ public class IscTorrentGUI {
      *************************************************************************
      *************************************************************************/
     private void addConnectFrameContent() {
-        connectFrame.setSize(800, 100);
-        connectFrame.setResizable(false);
-        Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize(); // centrar a janela
-        connectFrame.setLocation(dimension.width / 2 - connectFrame.getSize().width / 2 + 150,
-                dimension.height / 2 + mainFrame.getSize().height / 2 + 15);
+        connectFrame.setSize(800, 100); // define o tamanho da main frame
+        connectFrame.setResizable(false); // não é resizable
+        // centrar a janela
+        Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize(); 
+        connectFrame.setLocation(dimension.width/2 - connectFrame.getSize().width/2 + 150, dimension.height/2 + mainFrame.getSize().height/2 + 15);
 
-        // Adiciona os elementos da janela de conexão com um nó
+        // adiciona os elementos da janela de conexão com um nó
         JPanel connectPanel = new JPanel();
-        connectPanel.setLayout(new GridLayout(1, 6)); // grid layout para alinhar os elementos horizontalmente - mesmo
-                                                      // tamanho as 4 colunas
+        connectPanel.setLayout(new GridLayout(1, 6)); // grid layout para alinhar os elementos horizontalmente - mesmo tamanho as 6 colunas
         connectFrame.add(connectPanel, BorderLayout.CENTER);
         JLabel addressLabel = new JLabel("  Endereço:");
         connectPanel.add(addressLabel);
@@ -214,13 +211,14 @@ public class IscTorrentGUI {
         okButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (addressField.getText().isEmpty() || portField.getText().isEmpty()) {
+                if (addressField.getText().isEmpty() || portField.getText().isEmpty()) { // um dos campos não está preenchido
                     JOptionPane.showMessageDialog(null, "Insira o endereço e a porta do nó!");
                 } else {
+                    //os dois campos estão preenchidos
                     try {
-                        node.newConnection(addressField.getText(), Integer.parseInt(portField.getText())); // ligar ao
-                                                                                                           // nó
-                        connectFrame.setVisible(false);
+                        // obtém o address e a porta e faz a conexão
+                        node.newConnection(addressField.getText(), Integer.parseInt(portField.getText())); // ligar ao nó
+                        connectFrame.setVisible(false); // a connection port desaparece
                     } catch (IOException e1) {
                         e1.printStackTrace();
                     }
@@ -231,6 +229,8 @@ public class IscTorrentGUI {
 
     }
 
+
+    // quando fazemos open aparece a main freame mas a connect frame não aparece
     public void open() {
         mainFrame.setVisible(true);
         connectFrame.setVisible(false);
