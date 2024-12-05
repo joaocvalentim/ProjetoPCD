@@ -15,6 +15,7 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.Map;
 
 /*
  * Objetivo: Esta classe gerencia a interface gráfica do usuário, encapsulando todos os elementos e funcionalidades da GUI do sistema.
@@ -117,7 +118,7 @@ public class IscTorrentGUI {
             public void actionPerformed(ActionEvent e) {
                 // método para pesquisar a palavra-chave -ig que é isto mas not sure
                 if (searchKeyword.getText().isEmpty())
-                    JOptionPane.showMessageDialog(null, "Insira uma palavra-chave!");
+                    JOptionPane.showMessageDialog(null, "Insira uma palavra-chave!", "Erro", JOptionPane.ERROR_MESSAGE);
                 else {
                     node.startSearch(searchKeyword.getText()); // enviar a palavra-chave para o nó
                     if (node.getSearchResults().isEmpty())
@@ -150,9 +151,9 @@ public class IscTorrentGUI {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (resultList.isSelectionEmpty())
-                    JOptionPane.showMessageDialog(null, "Não está nenhum item selecionado!");
+                    JOptionPane.showMessageDialog(null, "Não está nenhum item selecionado!", "Erro",JOptionPane.ERROR_MESSAGE);
                 else if (resultList.getSelectedIndices().length > 1) // depois meter isto funcional
-                    JOptionPane.showMessageDialog(null, "Estão vários itens selecionados!");
+                    JOptionPane.showMessageDialog(null, "Estão vários itens selecionados!", "Erro",JOptionPane.ERROR_MESSAGE);
                 else {
                     FileSearchResult fsr = resultList.getSelectedValue();
                     // node.sendDownloadRequest(fsr); // enviar o pedido de download para o nó
@@ -215,7 +216,7 @@ public class IscTorrentGUI {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (addressField.getText().isEmpty() || portField.getText().isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Insira o endereço e a porta do nó!");
+                    JOptionPane.showMessageDialog(null, "Insira o endereço e a porta do nó!", "Erro",JOptionPane.ERROR_MESSAGE);
                 } else {
                     try {
                         node.newConnection(addressField.getText(), Integer.parseInt(portField.getText())); // ligar ao
@@ -229,6 +230,35 @@ public class IscTorrentGUI {
         });
         connectPanel.add(okButton);
 
+    }
+
+
+    /*
+     * 
+     * 
+     * 
+     * Error/Success Messages
+     * 
+     * 
+     * 
+     */
+
+    public void downloadFinished(Map<String, Integer> downloadResults, long time) {
+        String message ="Descarga completa. \n";
+        for (Map.Entry<String, Integer> entry : downloadResults.entrySet()) {
+            message += "Fornecedor [Node = "+entry.getKey() + " || Blocos enviados = " + entry.getValue()+" ]\n";
+        }
+
+        message += "Tempo decorrido: " + time + " segundos";
+        JOptionPane.showMessageDialog(null,message, "Download Completo",JOptionPane.INFORMATION_MESSAGE);  
+    }
+
+    public void connectToSelf() {
+        JOptionPane.showMessageDialog(null, "Não é possível ligar a si mesmo!", "Erro", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public void failedToConnect(String address, int port) {
+        JOptionPane.showMessageDialog(null, "Falha ao ligar ao nó: "+address+":"+port+" !", "Erro", JOptionPane.ERROR_MESSAGE);
     }
 
     public void open() {
