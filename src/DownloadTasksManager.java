@@ -69,6 +69,8 @@ public class DownloadTasksManager implements Serializable {
       private List<FileBlockAnswerMessage> fileBlockAnswerMessages;
       private List<FileBlockRequestMessage> fileBlockRequestMessages;
       private Node node;
+      private long startTime;
+      private long endTime;
 
 
       public Downloader(DownloadTasksManager dtm) {
@@ -83,6 +85,7 @@ public class DownloadTasksManager implements Serializable {
       @Override
       public void run() {
          try{
+            startTime = System.currentTimeMillis();
             while(fileBlockAnswerMessages.size() < fileBlockRequestMessages.size()){
                fileBlockAnswerMessages.add(downloadTasksManager.takeAnswerMessage());
             }
@@ -93,6 +96,10 @@ public class DownloadTasksManager implements Serializable {
             createFile();
          }catch(InterruptedException e){
             e.printStackTrace();
+         } finally {
+            endTime = System.currentTimeMillis();
+            node.getGUI().downloadFinished(node.getRequestCounter(), (endTime - startTime)/1000);
+            //System.out.println("DownloadTasksManager: Acabou" + (endTime - startTime)/1000 + " s");
          }
       }
 
