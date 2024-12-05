@@ -301,6 +301,7 @@ public class Node {
             searchResults.add(result);
             System.out.println("Node - " + folderPath + " - Resultado de busca: " + result.getNome());
         }
+        GUI.updateSearchResults(searchResults);
     }
 
     /**************************************************************************

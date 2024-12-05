@@ -122,15 +122,6 @@ public class IscTorrentGUI {
                     JOptionPane.showMessageDialog(null, "Insira uma palavra-chave!", "Erro", JOptionPane.ERROR_MESSAGE);
                 else {
                     node.startSearch(searchKeyword.getText()); // enviar a palavra-chave para o nó
-                    if (node.getSearchResults().isEmpty())
-                        try {
-                            Thread.sleep(10);
-                        } catch (InterruptedException e1) {
-                            e1.printStackTrace();
-                        }
-                    // pesquisa!");
-                    resultList.setListData(node.getSearchResults().toArray(new FileSearchResult[0]));
-
                 }
             }
         });
@@ -243,6 +234,11 @@ public class IscTorrentGUI {
      * 
      */
 
+
+    public void updateSearchResults(List<FileSearchResult> searchResults) {
+        resultList.setListData(searchResults.toArray(new FileSearchResult[0]));
+    }
+    
     public void downloadFinished(Map<String, Integer> downloadResults, long time) {
         String message ="Descarga completa. \n";
         for (Map.Entry<String, Integer> entry : downloadResults.entrySet()) {
