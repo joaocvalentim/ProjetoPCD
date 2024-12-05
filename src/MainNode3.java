@@ -10,7 +10,7 @@ public class MainNode3 {
 
     public static void main(String[] args) throws IOException {
 
-        Node node = new Node(port, address, folderPath);
+        new Node(port, address, folderPath);
 
     
     }

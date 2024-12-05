@@ -92,7 +92,6 @@ public class NodeServer extends Thread {
                 //node.removeNode(clientSocket.getInetAddress().getHostName(), clientSocket.getPort());
                 System.out.println("Conexão com " + clientSocket.getInetAddress().getHostName() + ":" + clientSocket.getPort() + " encerrada.");
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
