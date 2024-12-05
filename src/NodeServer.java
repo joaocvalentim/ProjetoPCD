@@ -26,13 +26,7 @@ public class NodeServer extends Thread {
             System.err.println("Erro ao iniciar o servidor na porta" + node.getPort());
             e.printStackTrace();
         } finally {
-            if (serverSocket != null) {
-                try {
-                    serverSocket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            stopServer();
         }
     }
 
@@ -42,6 +36,19 @@ public class NodeServer extends Thread {
             System.out.println("Nova conexão recebida de " + clientSocket.getInetAddress().getHostName() + ":" + clientSocket.getPort());
             HandleConnection handleConnection = new HandleConnection(clientSocket, node);
             handleConnection.start();
+        }
+    }
+
+    public void stopServer() {
+        try {
+            node.stop();
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close();
+            }
+            System.out.println("NodeServer - Servidor encerrado.");
+        } catch (IOException e) {
+            System.err.println("Erro ao encerrar o servidor: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -63,29 +70,29 @@ public class NodeServer extends Thread {
         }
 
         @Override
-        public void run(){
+        public synchronized void run(){
             try{
-                //ObjectOutput output = new ObjectOutputStream(clientSocket.getOutputStream());
-                //ObjectInputStream input = new ObjectInputStream(clientSocket.getInputStream());
-                //BufferedReader in = new BufferedReader ( new InputStreamReader (input));
-
-                while(true){
-                //while(in.readLine() != null){
+                while(!clientSocket.isClosed()){
                     Object message = input.readObject();
-                    //Object message = in.readLine();
                     node.handleMessage(clientSocket, message);
                 }
             } catch (IOException | ClassNotFoundException e){
                 System.err.println("Erro ao receber mensagem de " + clientSocket.getInetAddress().getHostName() + ":" + clientSocket.getPort());
                 e.printStackTrace();
             } finally {
-                if (clientSocket != null){
-                    try{
-                        clientSocket.close();
-                    } catch (IOException e){
-                        e.printStackTrace();
-                    }
-                }
+                closeConnection();
+            }
+        }
+
+        public void closeConnection(){
+            try {
+                node.removeConnection(clientSocket);
+                input.close();
+                output.close();
+                //node.removeNode(clientSocket.getInetAddress().getHostName(), clientSocket.getPort());
+                System.out.println("Conexão com " + clientSocket.getInetAddress().getHostName() + ":" + clientSocket.getPort() + " encerrada.");
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }

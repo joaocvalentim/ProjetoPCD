@@ -15,6 +15,9 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 /*
  * Objetivo: Esta classe gerencia a interface gráfica do usuário, encapsulando todos os elementos e funcionalidades da GUI do sistema.
@@ -115,7 +118,7 @@ public class IscTorrentGUI {
             public void actionPerformed(ActionEvent e) {
                 // método para pesquisar a palavra-chave -ig que é isto mas not sure
                 if (searchKeyword.getText().isEmpty())
-                    JOptionPane.showMessageDialog(null, "Insira uma palavra-chave!");
+                    JOptionPane.showMessageDialog(null, "Insira uma palavra-chave!", "Erro", JOptionPane.ERROR_MESSAGE);
                 else {
                     node.startSearch(searchKeyword.getText()); // enviar a palavra-chave para o nó
                     if (node.getSearchResults().isEmpty()) // verifica se há resultados e se houver são devolvidos
@@ -124,8 +127,7 @@ public class IscTorrentGUI {
                         } catch (InterruptedException e1) {
                             e1.printStackTrace();
                         }
-                    // JOptionPane.showMessageDialog(null, "Não foram encontrados resultados para a pesquisa!");
-                    // atualiza a lista de resultados
+                    // pesquisa!");
                     resultList.setListData(node.getSearchResults().toArray(new FileSearchResult[0]));
                 }
             }
@@ -147,13 +149,11 @@ public class IscTorrentGUI {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (resultList.isSelectionEmpty())
-                    JOptionPane.showMessageDialog(null, "Não está nenhum item selecionado!");
-                else if (resultList.getSelectedIndices().length > 1) // depois meter isto funcional
-                    JOptionPane.showMessageDialog(null, "Estão vários itens selecionados!");
+                    JOptionPane.showMessageDialog(null, "Não está nenhum item selecionado!", "Erro",JOptionPane.ERROR_MESSAGE);
                 else {
-                    FileSearchResult fsr = resultList.getSelectedValue();
-                    // node.sendDownloadRequest(fsr); // enviar o pedido de download para o nó
-                    node.startDownload(fsr); //download do file search result
+                    List<FileSearchResult> fsr = new ArrayList<FileSearchResult>();
+                    fsr.addAll(resultList.getSelectedValuesList());
+                    node.startDownload(fsr);
                 }
             }
         });
@@ -189,7 +189,7 @@ public class IscTorrentGUI {
 
         // adiciona os elementos da janela de conexão com um nó
         JPanel connectPanel = new JPanel();
-        connectPanel.setLayout(new GridLayout(1, 6)); // grid layout para alinhar os elementos horizontalmente - mesmo tamanho as 6 colunas
+        connectPanel.setLayout(new GridLayout(1, 6)); // grid layout para alinhar os elementos horizontalmente - mesmo tamanho as 4 colunas
         connectFrame.add(connectPanel, BorderLayout.CENTER);
         JLabel addressLabel = new JLabel("  Endereço:");
         connectPanel.add(addressLabel);
@@ -203,6 +203,8 @@ public class IscTorrentGUI {
         cancelButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                addressField.setText("");
+                portField.setText("");
                 connectFrame.setVisible(false);
             }
         });
@@ -211,14 +213,15 @@ public class IscTorrentGUI {
         okButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (addressField.getText().isEmpty() || portField.getText().isEmpty()) { // um dos campos não está preenchido
-                    JOptionPane.showMessageDialog(null, "Insira o endereço e a porta do nó!");
+                if (addressField.getText().isEmpty() || portField.getText().isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Insira o endereço e a porta do nó!", "Erro",JOptionPane.ERROR_MESSAGE);
                 } else {
                     //os dois campos estão preenchidos
                     try {
-                        // obtém o address e a porta e faz a conexão
                         node.newConnection(addressField.getText(), Integer.parseInt(portField.getText())); // ligar ao nó
-                        connectFrame.setVisible(false); // a connection port desaparece
+                        addressField.setText("");
+                        portField.setText("");
+                        connectFrame.setVisible(false);
                     } catch (IOException e1) {
                         e1.printStackTrace();
                     }
@@ -230,7 +233,34 @@ public class IscTorrentGUI {
     }
 
 
-    // quando fazemos open aparece a main freame mas a connect frame não aparece
+    /*
+     * 
+     * 
+     * 
+     * Error/Success Messages
+     * 
+     * 
+     * 
+     */
+
+    public void downloadFinished(Map<String, Integer> downloadResults, long time) {
+        String message ="Descarga completa. \n";
+        for (Map.Entry<String, Integer> entry : downloadResults.entrySet()) {
+            message += "Fornecedor [Node = "+entry.getKey() + " || Blocos enviados = " + entry.getValue()+" ]\n";
+        }
+
+        message += "Tempo decorrido: " + time + " segundos";
+        JOptionPane.showMessageDialog(null,message, "Download Completo",JOptionPane.INFORMATION_MESSAGE);  
+    }
+
+    public void connectToSelf() {
+        JOptionPane.showMessageDialog(null, "Não é possível ligar a si mesmo!", "Erro", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public void failedToConnect(String address, int port) {
+        JOptionPane.showMessageDialog(null, "Falha ao ligar ao nó: "+address+":"+port+" !", "Erro", JOptionPane.ERROR_MESSAGE);
+    }
+
     public void open() {
         mainFrame.setVisible(true);
         connectFrame.setVisible(false);
