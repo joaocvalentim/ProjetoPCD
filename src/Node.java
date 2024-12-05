@@ -18,17 +18,14 @@ public class Node {
     private String address; // endereço do nó
     private String folderPath; // pasta com os ficheiros do nó
     private IscTorrentGUI GUI; // interface gráfica do nó
-    //cenas para conexao entre nós
+    // conexao entre nós
     private List<Socket> connections; // lista de sockets connectado
-    private NodeServer server; // server dedicado ao nó - sempre À espera de receber conexões
+    private NodeServer server; // server dedicado ao nó - está sempre à espera de receber conexões
     private Map<Socket, ObjectOutputStream> outputStreams = new ConcurrentHashMap<>(); //qual o outputstream associado a cada socket/conexao
     private Map<String, Socket> connectionId = new ConcurrentHashMap<>(); //qual o socket associado a cada endereço:porta
-
-
     // Cenas para a pesquisa
     public List<FileSearchResult> searchResults = new ArrayList<FileSearchResult>(); //lista com os resultados da pesquisa (FSR cujo nome contém a keyword)
     public List<FileSearchResult> myFiles = new ArrayList<FileSearchResult>(); //lista com os ficheiros do nó
-
     // cenas para download
     private static final int BLOCK_SIZE = 1024; //tamanho max dum FBRM - Transformar FSR em FBRM
     private DownloadTasksManager dtm; //objeto partilhado entre nodes para download de ficheiros

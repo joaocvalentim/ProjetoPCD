@@ -158,7 +158,7 @@ public class IscTorrentGUI {
             }
         });
         buttonPanel.add(downloadButton);
-        // Botão "Ligar a nó"
+        // botão "Ligar a nó"
         JButton connectButton = new JButton("Ligar a nó");
         connectButton.addActionListener(new ActionListener() {
             @Override
