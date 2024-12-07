@@ -238,7 +238,7 @@ public class IscTorrentGUI {
     public void updateSearchResults(List<FileSearchResult> searchResults) {
         resultList.setListData(searchResults.toArray(new FileSearchResult[0]));
     }
-    
+
     public void downloadFinished(Map<String, Integer> downloadResults, long time) {
         String message ="Descarga completa. \n";
         for (Map.Entry<String, Integer> entry : downloadResults.entrySet()) {
@@ -247,6 +247,10 @@ public class IscTorrentGUI {
 
         message += "Tempo decorrido: " + time + " segundos";
         JOptionPane.showMessageDialog(null,message, "Download Completo",JOptionPane.INFORMATION_MESSAGE);  
+    }
+
+    public void needToConnect(String address, int port) {
+        JOptionPane.showMessageDialog(null, "Precisa de ligar ao nó: "+address+":"+port+" !", "Erro", JOptionPane.ERROR_MESSAGE);
     }
 
     public void connectToSelf() {
