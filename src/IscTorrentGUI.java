@@ -249,8 +249,8 @@ public class IscTorrentGUI {
         JOptionPane.showMessageDialog(null,message, "Download Completo",JOptionPane.INFORMATION_MESSAGE);  
     }
 
-    public void needToConnect(String address, int port) {
-        JOptionPane.showMessageDialog(null, "Precisa de ligar ao nó: "+address+":"+port+" !", "Erro", JOptionPane.ERROR_MESSAGE);
+    public void needToConnect(String connectionKey) {
+        JOptionPane.showMessageDialog(null, "Precisa de ligar ao nó: "+connectionKey+" !", "Erro", JOptionPane.ERROR_MESSAGE);
     }
 
     public void connectToSelf() {
