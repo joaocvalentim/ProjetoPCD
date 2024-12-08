@@ -7,9 +7,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.LinkedList;
+import java.util.concurrent.locks.ReentrantLock;
 
 /*  Pagina 7 e 8 do enunciado
  *  Objetivo: Gerir e coordenar as tarefas de descarregamento de blocos de ficheiros.
@@ -21,16 +24,19 @@ public class DownloadTasksManager implements Serializable {
    // private int numBlocksSent = 0; //numero de blocos enviados
    // private int numBlocksReceived = 0; //numero de blocos recebidos
 
-   private BlockingQueue<FileBlockRequestMessage> fileBlockRequestMessages; // lista onde vão ser adicionados os pedidos
-   private BlockingQueue<FileBlockAnswerMessage> fileBlockAnswerMessages; // lista onde vão ser adicionadas as respostas
+   private List<FileBlockRequestMessage> fileBlockRequestMessages; // lista onde vão ser adicionados os pedidos
+   private List<FileBlockAnswerMessage> fileBlockAnswerMessages; // lista onde vão ser adicionadas as respostas
    private Node requesterNode;
    private Map<String, Integer> requestCounter ; // contador de pedidos de bloco de ficheiro
 
-
+   private Lock lock = new ReentrantLock(); // lock para garantir a sincronização entre threads
+   private Condition requestNotEmpty = lock.newCondition(); // condição para agir: notEmpty - necessário usar para avisar o consumidor quando a lista não está vazia
+   private Condition answerNotEmpty= lock.newCondition(); // condição para agir: notEmpty - necessário usar para avisar o consumidor quando a lista não está vazia
+   
    public DownloadTasksManager(List<FileBlockRequestMessage> fileBlockRequestMessages, Node requesterNode) {
-      this.fileBlockRequestMessages = new LinkedBlockingQueue<FileBlockRequestMessage>();
+      this.fileBlockRequestMessages = new LinkedList<FileBlockRequestMessage>();
       this.fileBlockRequestMessages.addAll(fileBlockRequestMessages);
-      this.fileBlockAnswerMessages = new LinkedBlockingQueue<FileBlockAnswerMessage>();
+      this.fileBlockAnswerMessages = new LinkedList<FileBlockAnswerMessage>();
       this.requesterNode = requesterNode;
       requestCounter = new ConcurrentHashMap<String, Integer>();
       Downloader downloader = new Downloader(this);
@@ -38,31 +44,61 @@ public class DownloadTasksManager implements Serializable {
    }
 
    public void putRequestMessage(FileBlockRequestMessage fbrm) throws InterruptedException {
-      fileBlockRequestMessages.put(fbrm);
+      lock.lock();
+      try{
+         fileBlockRequestMessages.add(fbrm);
+         requestNotEmpty.signalAll();
+      } finally {
+         lock.unlock();
+      }
+      
 
    }
 
    public FileBlockRequestMessage takeRequestMessage() throws InterruptedException {
-      FileBlockRequestMessage fbrm = fileBlockRequestMessages.take();
-      return fbrm;
+      lock.lock();
+      try{
+         while(fileBlockRequestMessages.isEmpty()){
+            requestNotEmpty.await();
+         }
+         FileBlockRequestMessage fbrm = fileBlockRequestMessages.remove(0);
+         return fbrm;
+      } finally {
+         lock.unlock();
+      }
    }
 
    public void putAnswerMessage(FileBlockAnswerMessage fbam) throws InterruptedException {
-      System.out.println("DownloadTasksManager: putAnswerMessage");
-      fileBlockAnswerMessages.put(fbam);
+      lock.lock();
+      try{
+         System.out.println("DownloadTasksManager: putAnswerMessage");
+         fileBlockAnswerMessages.add(fbam);
+         answerNotEmpty.signalAll();
+      } finally {
+         lock.unlock();
+      }
    }
 
    public FileBlockAnswerMessage takeAnswerMessage() throws InterruptedException {
-      FileBlockAnswerMessage fbam = fileBlockAnswerMessages.take();
-      System.out.println("DownloadTasksManager: takeAnswerMessage");
-      return fbam;
+      lock.lock();
+      try{
+         while(fileBlockAnswerMessages.isEmpty()){
+            answerNotEmpty.await();
+         }
+         FileBlockAnswerMessage fbam = fileBlockAnswerMessages.remove(0);
+         //notEmpty.signalAll();
+         return fbam;
+      } finally {
+         lock.unlock();
+      }
+      
    }
 
-   public BlockingQueue<FileBlockRequestMessage> getFileBlockRequestMessages() {
+   public List<FileBlockRequestMessage> getFileBlockRequestMessages() {
       return fileBlockRequestMessages;
    }
 
-   public BlockingQueue<FileBlockAnswerMessage> getFileBlockAnswerMessages() {
+   public List<FileBlockAnswerMessage> getFileBlockAnswerMessages() {
       return fileBlockAnswerMessages;
    }
 
@@ -83,6 +119,8 @@ public class DownloadTasksManager implements Serializable {
       private Node node;
       private long startTime;
       private long endTime;
+      
+      private CountDownLatch latch;
 
 
       public Downloader(DownloadTasksManager dtm) {
@@ -91,19 +129,17 @@ public class DownloadTasksManager implements Serializable {
          this.fileBlockRequestMessages = new ArrayList<FileBlockRequestMessage>();
          this.fileBlockRequestMessages.addAll(dtm.getFileBlockRequestMessages());
          this.node = dtm.requesterNode;
-
+         this.latch = new CountDownLatch(fileBlockRequestMessages.size());
       }
 
       @Override
       public void run() {
          try{
             startTime = System.currentTimeMillis();
-            while(fileBlockAnswerMessages.size() < fileBlockRequestMessages.size()){
+            while(latch.getCount() > 0){
                fileBlockAnswerMessages.add(downloadTasksManager.takeAnswerMessage());
+               latch.countDown();
             }
-            System.err.println("acabei de receber os blocos");
-            System.err.println("answerList.size(): " + fileBlockAnswerMessages.size());
-            System.err.println("requestList.size(): " + fileBlockRequestMessages.size());
             orderAnswerBlocks();
             createFile();
          }catch(InterruptedException e){
@@ -123,7 +159,6 @@ public class DownloadTasksManager implements Serializable {
 
       // cria o ficheiro a partir dos blocos recebidos
       public synchronized void createFile() {
-         System.out.println("DownloadTasksManager: createFile");
          try {
             String nome = "";
             for (FileSearchResult fsr : node.getSearchResults()) {
@@ -142,7 +177,6 @@ public class DownloadTasksManager implements Serializable {
             e.printStackTrace();
          }
       }
-
    }
 
 }

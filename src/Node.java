@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -33,7 +34,7 @@ public class Node {
     public List<FileSearchResult> myFiles = new ArrayList<FileSearchResult>(); // lista com os ficheiros do nó
 
     // cenas para download
-    private static final int BLOCK_SIZE = 1024; // tamanho max dum FBRM - Transformar FSR em FBRM
+    private static final int BLOCK_SIZE = 10240; // tamanho max dum FBRM - Transformar FSR em FBRM
     // private DownloadTasksManager dtm; // objeto partilhado entre nodes para
     // download de ficheiros
     private ExecutorService downloadThreadPool = Executors.newFixedThreadPool(5); // pool de threads para download
@@ -47,9 +48,9 @@ public class Node {
      **************************************************************************
      ************************************************************************** 
      * 
-     * CONSTRUTOR
+     *                      CONSTRUTOR
      * 
-     * Node // Node
+     *                        Node
      *************************************************************************
      *************************************************************************
      *************************************************************************/
@@ -72,9 +73,9 @@ public class Node {
      **************************************************************************
      ************************************************************************** 
      * 
-     * CRIAR E ACEITAR CONEXÕES
+     * ENVIAR PEDIDO DE CONEXÃO // TERMINAR CONEXÃO
      * 
-     * newConnection // addConnection
+     * newConnection // stop // removeConnection
      *************************************************************************
      *************************************************************************
      *************************************************************************/
@@ -239,12 +240,10 @@ public class Node {
 
                 }
             }
-
         } else if (message instanceof FileBlockRequestMessage) {
             FileBlockRequestMessage request = (FileBlockRequestMessage) message;
             System.out.println("Node - " + folderPath + " - Pedido de bloco de ficheiro recebido.");
             this.downloadThreadPool.submit(new AnwserSender(request, this));
-
         } else if (message instanceof FileBlockAnswerMessage) {
             System.out.println("Node - " + folderPath + " - Resposta de bloco de ficheiro recebida.");
             try {
@@ -258,9 +257,8 @@ public class Node {
             System.out.println("Node - " + folderPath + " - Pedido de encerramento de conexão recebido.");
             removeConnection(clientSocket);
         }
-
         else
-            System.err.println("ESTOU A RECEBER UMA MERDA ATOA");
+            System.err.println("Recebi algo nao esperado");
 
     }
 
@@ -270,12 +268,12 @@ public class Node {
      * 
      * Pesquisa de Ficheiros
      * 
-     * startSearch // searchFiles // updateSearchResults
+     * startSearch // getfiles // searchFiles // updateSearchResults
      *************************************************************************
      *************************************************************************
      *************************************************************************/
 
-    synchronized public void startSearch(String keyword) {
+    public void startSearch(String keyword) {
         searchResults.clear();
 
         String connectionKey = this.address + ":" + this.port;
@@ -351,9 +349,9 @@ public class Node {
      **************************************************************************
      ************************************************************************** 
      * 
-     * Download de Ficheiros - por fazer
+     * Download de Ficheiros 
      * 
-     * sendDownloadRequest
+     * startDownload // RequestSender // AnwserSender 
      *************************************************************************
      *************************************************************************
      *************************************************************************/
@@ -401,27 +399,29 @@ public class Node {
         private int port;
         private DownloadTasksManager dtm;
         private Node node;
+        private CountDownLatch latch;
 
         public RequestSender(String address, int port, DownloadTasksManager dtm, Node node) {
             this.address = address;
             this.port = port;
             this.dtm = dtm;
             this.node = node;
+            this.latch = new CountDownLatch(dtm.getFileBlockRequestMessages().size());
         }
 
         @Override
         public synchronized void run() {
-            while (dtm.getFileBlockRequestMessages().size() > 0) {
+            while (latch.getCount() > 0) {
                 try {
                     Socket connection = node.connectionId.get(address + ":" + port);
                     FileBlockRequestMessage request = dtm.takeRequestMessage();
                     dtm.addRequestCounter(address + ":" + port);
                     node.sendMessage(connection, request);
-                    // System.out.println("Node - " + " - Pedido de download enviado para " +
-                    // address + ":" + port);
+                    latch.countDown();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+
             }
             System.err.println("acabei de enviar esta merda toda");
         }
@@ -475,9 +475,9 @@ public class Node {
      **************************************************************************
      ************************************************************************** 
      * 
-     * Getters e Setters
+     *                              Getters
      * 
-     * getSearchResults // getPort // getAddress // getFolderPath
+     * 
      *************************************************************************
      *************************************************************************
      *************************************************************************/
