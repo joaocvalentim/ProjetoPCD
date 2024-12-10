@@ -4,7 +4,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -86,7 +85,6 @@ public class DownloadTasksManager implements Serializable {
             answerNotEmpty.await();
          }
          FileBlockAnswerMessage fbam = fileBlockAnswerMessages.remove(0);
-         //notEmpty.signalAll();
          return fbam;
       } finally {
          lock.unlock();
@@ -152,9 +150,17 @@ public class DownloadTasksManager implements Serializable {
       }
 
       // ordena a lista de respostas por ordem de bloco
-      public void orderAnswerBlocks() {
-         System.out.println("DownloadTasksManager: orderAnswerBlocks");
-         fileBlockAnswerMessages.sort(Comparator.comparing(FileBlockAnswerMessage::getOffset));
+      public void orderAnswerBlocks (){
+         FileBlockAnswerMessage temp;
+         for (int i=fileBlockAnswerMessages.size()-1;i!=0;i--){
+            for (int j=0; j!=i;j++){
+               if (fileBlockAnswerMessages.get(j).getOffset() > fileBlockAnswerMessages.get(j+1).getOffset()){
+                  temp = fileBlockAnswerMessages.get(j);
+                  fileBlockAnswerMessages.set(j, fileBlockAnswerMessages.get(j+1));
+                  fileBlockAnswerMessages.set(j+1, temp);
+               }
+            }
+         }
       }
 
       // cria o ficheiro a partir dos blocos recebidos

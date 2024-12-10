@@ -22,20 +22,14 @@ public class Node {
     // cenas para conexao entre nós
     private List<Socket> connections; // lista de sockets connectado
     private NodeServer server; // server dedicado ao nó - sempre À espera de receber conexões
-    private Map<Socket, ObjectOutputStream> outputStreams = new ConcurrentHashMap<>(); // qual o outputstream associado
-                                                                                       // a cada socket/conexao
-    private Map<String, Socket> connectionId = new ConcurrentHashMap<>(); // qual o socket associado a cada
-                                                                          // endereço:porta
-
+    private Map<Socket, ObjectOutputStream> outputStreams = new ConcurrentHashMap<>(); // qual o outputstream associado a cada socket/conexao
+    private Map<String, Socket> connectionId = new ConcurrentHashMap<>(); // qual o socket associado a cada endereço:porta
     // Cenas para a pesquisa
-    public List<FileSearchResult> searchResults = new ArrayList<FileSearchResult>(); // lista com os resultados da
-                                                                                     // pesquisa (FSR cujo nome contém a
-                                                                                     // keyword)
+    public List<FileSearchResult> searchResults = new ArrayList<FileSearchResult>(); // lista com os resultados dapesquisa (FSR cujo nome contém akeyword)
     public List<FileSearchResult> myFiles = new ArrayList<FileSearchResult>(); // lista com os ficheiros do nó
 
     // cenas para download
     private static final int BLOCK_SIZE = 10240; // tamanho max dum FBRM - Transformar FSR em FBRM
-    // private DownloadTasksManager dtm; // objeto partilhado entre nodes para
     // download de ficheiros
     private ExecutorService downloadThreadPool = Executors.newFixedThreadPool(5); // pool de threads para download
     private Map<String, DownloadTasksManager> dtmByFsrHash = new ConcurrentHashMap<String, DownloadTasksManager>(); // mapa
@@ -48,9 +42,9 @@ public class Node {
      **************************************************************************
      ************************************************************************** 
      * 
-     *                      CONSTRUTOR
+     * CONSTRUTOR
      * 
-     *                        Node
+     * Node
      *************************************************************************
      *************************************************************************
      *************************************************************************/
@@ -79,8 +73,7 @@ public class Node {
      *************************************************************************
      *************************************************************************
      *************************************************************************/
-    public void newConnection(String address1, int port1) throws IOException {
-
+    public void newConnection(String address1, int port1)  {
         if (address1.equals(this.address) && port1 == this.port) {
             GUI.connectToSelf();
             System.err.println("Node - " + folderPath + " - Não posso conectar-me a mim mesmo.");
@@ -170,11 +163,8 @@ public class Node {
 
     public void handleMessage(Socket clientSocket, Object message) throws IOException {
         if (message instanceof NewConnectionRequest) {
-
             NewConnectionRequest newConnectionRequest = (NewConnectionRequest) message;
-            System.out.println("Node - " + folderPath + " - Pedido de conexão recebido de "
-                    + newConnectionRequest.getAddress() + ":" + newConnectionRequest.getPort());
-
+            System.out.println("Node - " + folderPath + " - Pedido de conexão recebido de "+ newConnectionRequest.getAddress() + ":" + newConnectionRequest.getPort());
             String connectionKey = newConnectionRequest.getAddress() + ":" + newConnectionRequest.getPort();
 
             if (!connectionId.containsKey(connectionKey)) {
@@ -188,8 +178,7 @@ public class Node {
 
         } else if (message instanceof WordSearchMessage) {
             WordSearchMessage searchMessage = (WordSearchMessage) message;
-            System.out.println(
-                    "Node - " + folderPath + " - Mensagem de busca recebida (" + searchMessage.getKeyword() + ")");
+            System.out.println("Node - " + folderPath + " - Mensagem de busca recebida (" + searchMessage.getKeyword() + ")");
 
             // procurar no proprio node
             searchFiles(searchMessage);
@@ -256,8 +245,7 @@ public class Node {
         } else if (message instanceof String && message.equals("STOP")) {
             System.out.println("Node - " + folderPath + " - Pedido de encerramento de conexão recebido.");
             removeConnection(clientSocket);
-        }
-        else
+        } else
             System.err.println("Recebi algo nao esperado");
 
     }
@@ -275,7 +263,7 @@ public class Node {
 
     public void startSearch(String keyword) {
         searchResults.clear();
-
+        
         String connectionKey = this.address + ":" + this.port;
         WordSearchMessage message = new WordSearchMessage(keyword, connectionKey);
         message.addVisitedNode(this.address + ":" + this.port);
@@ -286,6 +274,7 @@ public class Node {
             sendMessage(connection, message);
         }
     }
+
 
     public void getFiles() {
         File[] files = new File(folderPath).listFiles((new FilenameFilter() {
@@ -322,8 +311,7 @@ public class Node {
         for (FileSearchResult result : results) {
             sendMessage(connection, result);
         }
-        System.out.println("Node - " + folderPath + " - Resultados de busca enviados para o nó "
-                + connection.getInetAddress().getHostName() + ":" + connection.getPort());
+        System.out.println("Node - " + folderPath + " - Resultados de busca enviados para o nó "+ connection.getInetAddress().getHostName() + ":" + connection.getPort());
     }
 
     public void updateSearchResults(FileSearchResult result) {
@@ -334,7 +322,6 @@ public class Node {
             for (FileSearchResult fsr : searchResults) {
                 if (fsr.getHash().equals(result.getHash())) {
                     fsr.addNode(result.getEndereco().get(0), result.getPorta().get(0));
-                    ;
                     return;
                 }
             }
@@ -342,52 +329,71 @@ public class Node {
             System.out.println("Node - " + folderPath + " - Resultado de busca: " + result.getNome());
         }
         GUI.updateSearchResults(searchResults);
-
     }
 
     /**************************************************************************
      **************************************************************************
      ************************************************************************** 
      * 
-     * Download de Ficheiros 
+     * Download de Ficheiros
      * 
-     * startDownload // RequestSender // AnwserSender 
+     * startDownload // RequestSender // AnwserSender
      *************************************************************************
      *************************************************************************
      *************************************************************************/
 
     public void startDownload(List<FileSearchResult> resultsList) {
-        boolean canDownload = true;
-        String connectionKey = "";
+        List<String> connectionKeys = new ArrayList<String>(); // todas as keys que ele conhece
+        List<String> connectionKeysUnknow = new ArrayList<String>(); // todas as keys que ele nao conhece
 
         System.out.println("quero iniciar download madje");
         for (FileSearchResult fsr : resultsList) {
             for (int x = 0; x != fsr.getPorta().size(); x++) {
-                if (connectionId.get(fsr.getEndereco().get(x) + ":" + fsr.getPorta().get(x)) == null) {
-                    canDownload = false;
-                    connectionKey = fsr.getEndereco().get(x) + ":" + fsr.getPorta().get(x);
+                if (connectionId.get(fsr.getEndereco().get(x) + ":" + fsr.getPorta().get(x)) != null) {
+                    connectionKeys.add(fsr.getEndereco().get(x) + ":" + fsr.getPorta().get(x));
+                } else {
+                    connectionKeysUnknow.add(fsr.getEndereco().get(x) + ":" + fsr.getPorta().get(x));
                 }
             }
 
-            if (canDownload) {
+            if (connectionKeys.size() > 0) { // se conhecer algum dos nodes
+                if (connectionKeysUnknow.size() == 0) { //se conhecer todos os nodes
 
-                List<FileBlockRequestMessage> requestMessages = new ArrayList<FileBlockRequestMessage>();
-                for (int i = 0; i < fsr.getTamanho(); i += BLOCK_SIZE) {
-                    requestMessages.add(new FileBlockRequestMessage(fsr.getHash(), i,
-                            (int) Math.min(BLOCK_SIZE, fsr.getTamanho() - i), this.address, this.port));
+                    List<FileBlockRequestMessage> requestMessages = new ArrayList<FileBlockRequestMessage>();
+                    for (int i = 0; i < fsr.getTamanho(); i += BLOCK_SIZE) {
+                        requestMessages.add(new FileBlockRequestMessage(fsr.getHash(), i,
+                                (int) Math.min(BLOCK_SIZE, fsr.getTamanho() - i), this.address, this.port));
+                    }
+
+                    dtmByFsrHash.put(fsr.getHash(), new DownloadTasksManager(requestMessages, this));
+
+                    Thread[] RequestSenders = new Thread[fsr.getEndereco().size()];
+
+                    for (int i = 0; i < fsr.getEndereco().size(); i++) {
+                        RequestSenders[i] = new RequestSender(fsr.getEndereco().get(i), fsr.getPorta().get(i),
+                                dtmByFsrHash.get(fsr.getHash()), this);
+                        RequestSenders[i].start();
+                    }
+                } else { //se nao conhecer todos os nodes
+                    boolean stop = GUI.chooseToConnect(connectionKeysUnknow);
+                    if(!stop){
+                        List<FileBlockRequestMessage> requestMessages = new ArrayList<FileBlockRequestMessage>();
+                        for (int i = 0; i < fsr.getTamanho(); i += BLOCK_SIZE) {
+                            requestMessages.add(new FileBlockRequestMessage(fsr.getHash(), i,(int) Math.min(BLOCK_SIZE, fsr.getTamanho() - i), this.address, this.port));
+                        }
+                        dtmByFsrHash.put(fsr.getHash(), new DownloadTasksManager(requestMessages, this));
+                        Thread[] RequestSenders = new Thread[connectionKeys.size()];
+                        for (int i = 0; i < connectionKeys.size(); i++) {
+                            String address = connectionKeys.get(i).split(":")[0];
+                            int port = Integer.parseInt(connectionKeys.get(i).split(":")[1]);
+                            RequestSenders[i] = new RequestSender(address, port, dtmByFsrHash.get(fsr.getHash()), this);
+                            RequestSenders[i].start();
+                        }
+                    }
+
                 }
-
-                dtmByFsrHash.put(fsr.getHash(), new DownloadTasksManager(requestMessages, this));
-
-                Thread[] RequestSenders = new Thread[fsr.getEndereco().size()];
-
-                for (int i = 0; i < fsr.getEndereco().size(); i++) {
-                    RequestSenders[i] = new RequestSender(fsr.getEndereco().get(i), fsr.getPorta().get(i),
-                            dtmByFsrHash.get(fsr.getHash()), this);
-                    RequestSenders[i].start();
-                }
-            } else {
-                GUI.needToConnect(connectionKey);
+            } else { //se nao conhecer nenhum dos nodes
+                GUI.needToConnect(connectionKeysUnknow); 
             }
 
         }
@@ -475,7 +481,7 @@ public class Node {
      **************************************************************************
      ************************************************************************** 
      * 
-     *                              Getters
+     * Getters
      * 
      * 
      *************************************************************************
