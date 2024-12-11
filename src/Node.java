@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -21,20 +22,14 @@ public class Node {
     // conexão entre nós
     private List<Socket> connections; // lista de sockets connectado
     private NodeServer server; // server dedicado ao nó - sempre À espera de receber conexões
-    private Map<Socket, ObjectOutputStream> outputStreams = new ConcurrentHashMap<>(); // qual o outputstream associado
-                                                                                       // a cada socket/conexao
-    private Map<String, Socket> connectionId = new ConcurrentHashMap<>(); // qual o socket associado a cada
-                                                                          // endereço:porta
-
+    private Map<Socket, ObjectOutputStream> outputStreams = new ConcurrentHashMap<>(); // qual o outputstream associado a cada socket/conexao
+    private Map<String, Socket> connectionId = new ConcurrentHashMap<>(); // qual o socket associado a cada endereço:porta
     // Cenas para a pesquisa
-    public List<FileSearchResult> searchResults = new ArrayList<FileSearchResult>(); // lista com os resultados da
-                                                                                     // pesquisa (FSR cujo nome contém a
-                                                                                     // keyword)
+    public List<FileSearchResult> searchResults = new ArrayList<FileSearchResult>(); // lista com os resultados dapesquisa (FSR cujo nome contém akeyword)
     public List<FileSearchResult> myFiles = new ArrayList<FileSearchResult>(); // lista com os ficheiros do nó
 
     // cenas para download
-    private static final int BLOCK_SIZE = 1024; // tamanho max dum FBRM - Transformar FSR em FBRM
-    // private DownloadTasksManager dtm; // objeto partilhado entre nodes para
+    private static final int BLOCK_SIZE = 10240; // tamanho max dum FBRM - Transformar FSR em FBRM
     // download de ficheiros
     private ExecutorService downloadThreadPool = Executors.newFixedThreadPool(5); // pool de threads para download
     private Map<String, DownloadTasksManager> dtmByFsrHash = new ConcurrentHashMap<String, DownloadTasksManager>(); // mapa
@@ -49,7 +44,7 @@ public class Node {
      * 
      * CONSTRUTOR
      * 
-     * Node // Node
+     * Node
      *************************************************************************
      *************************************************************************
      *************************************************************************/
@@ -72,14 +67,13 @@ public class Node {
      **************************************************************************
      ************************************************************************** 
      * 
-     * CRIAR E ACEITAR CONEXÕES
+     * ENVIAR PEDIDO DE CONEXÃO // TERMINAR CONEXÃO
      * 
-     * newConnection // addConnection
+     * newConnection // stop // removeConnection
      *************************************************************************
      *************************************************************************
      *************************************************************************/
-    public void newConnection(String address1, int port1) throws IOException {
-
+    public void newConnection(String address1, int port1)  {
         if (address1.equals(this.address) && port1 == this.port) {
             GUI.connectToSelf();
             System.err.println("Node - " + folderPath + " - Não posso conectar-me a mim mesmo.");
@@ -95,8 +89,6 @@ public class Node {
             outputStreams.put(connection, output);
 
             connections.add(connection);
-            System.out.println("CARALHO" + address1 + ":" + port1);
-
             connectionId.put(address1 + ":" + port1, connection);
             System.out.println("Node - " + folderPath + " - Conexão estabelecida com " + address1 + ":" + port1);
 
@@ -119,7 +111,7 @@ public class Node {
             for (String key : connectionId.keySet()) {
                 if (connectionId.get(key).equals(connection)) {
                     connectionId.remove(key);
-                    connectionId.remove(connection);
+                    // connectionId.remove(connection);
                     break;
                 }
             }
@@ -169,11 +161,8 @@ public class Node {
 
     public void handleMessage(Socket clientSocket, Object message) throws IOException {
         if (message instanceof NewConnectionRequest) {
-
             NewConnectionRequest newConnectionRequest = (NewConnectionRequest) message;
-            System.out.println("Node - " + folderPath + " - Pedido de conexão recebido de "
-                    + newConnectionRequest.getAddress() + ":" + newConnectionRequest.getPort());
-
+            System.out.println("Node - " + folderPath + " - Pedido de conexão recebido de "+ newConnectionRequest.getAddress() + ":" + newConnectionRequest.getPort());
             String connectionKey = newConnectionRequest.getAddress() + ":" + newConnectionRequest.getPort();
 
             if (!connectionId.containsKey(connectionKey)) {
@@ -187,24 +176,60 @@ public class Node {
 
         } else if (message instanceof WordSearchMessage) {
             WordSearchMessage searchMessage = (WordSearchMessage) message;
-            System.out.println(
-                    "Node - " + folderPath + " - Mensagem de busca recebida (" + searchMessage.getKeyword() + ")");
+            System.out.println("Node - " + folderPath + " - Mensagem de busca recebida (" + searchMessage.getKeyword() + ")");
+
+            // procurar no proprio node
             searchFiles(searchMessage);
             for (FileSearchResult result : searchResults) {
                 sendMessage(clientSocket, result);
                 System.out.println("Node - " + folderPath + " - Resultado de busca enviado: " + result.getNome());
             }
+
+            // enviar para os nodes conectados -extra
+            searchMessage.setSenderKey(this.address + ":" + this.port);
+
+            List<String> connectionKey = searchMessage.getVisitedNodes();
+            List<Socket> nodesToSend = new ArrayList<Socket>();
+            for (String key : connectionId.keySet()) {
+                if (!connectionKey.contains(key)) {
+                    nodesToSend.add(connectionId.get(key));
+                    searchMessage.addVisitedNode(key);
+                }
+            }
+            for (Socket connection : nodesToSend) {
+                System.out.println("Node - " + folderPath + " - mensagem de reencaminhamento de busca enviada ");
+                sendMessage(connection, searchMessage);
+            }
+
         } else if (message instanceof FileSearchResult) {
             FileSearchResult result = (FileSearchResult) message;
             System.out.println("Node - " + folderPath + " - Resultado de busca recebido: " + result.getNome()
                     + " - a atualizar a gui");
-            updateSearchResults(result);
 
+            WordSearchMessage search = result.getWordSearchMessage();
+            // se o node for o que inicio a busca -> atualizar a gui
+            if (search.getVisitedNodes().get(0).equals(this.address + ":" + this.port)) {
+                updateSearchResults(result);
+                // se nao for o node que inicio a busca -> tentar reencaminhar para o node que
+                // iniciou a busca
+                // se nao conhecer o node que iniciou a busca -> reencaminhar para o primeiro
+                // node da lista de visitedNodes que conhecer
+            } else {
+                for (String key : search.getVisitedNodes()) {
+                    if (connectionId.containsKey(key)) {
+                        System.out.println(
+                                "Node - " + folderPath + " - Reencaminhando o resultado de busca para o nó " + key);
+                        Socket connection = connectionId.get(key);
+                        sendMessage(connection, result);
+                        return;
+                    }
+
+                }
+            }
         } else if (message instanceof FileBlockRequestMessage) {
             FileBlockRequestMessage request = (FileBlockRequestMessage) message;
             System.out.println("Node - " + folderPath + " - Pedido de bloco de ficheiro recebido.");
             this.downloadThreadPool.submit(new AnwserSender(request, this));
-
         } else if (message instanceof FileBlockAnswerMessage) {
             System.out.println("Node - " + folderPath + " - Resposta de bloco de ficheiro recebida.");
             try {
@@ -217,10 +242,8 @@ public class Node {
         } else if (message instanceof String && message.equals("STOP")) {
             System.out.println("Node - " + folderPath + " - Pedido de encerramento de conexão recebido.");
             removeConnection(clientSocket);
-        }
-
-        else
-            System.err.println("ESTOU A RECEBER UMA MERDA ATOA");
+        } else
+            System.err.println("Recebi algo nao esperado");
 
     }
 
@@ -230,20 +253,25 @@ public class Node {
      * 
      * Pesquisa de Ficheiros
      * 
-     * startSearch // searchFiles // updateSearchResults
+     * startSearch // getfiles // searchFiles // updateSearchResults
      *************************************************************************
      *************************************************************************
      *************************************************************************/
 
-    synchronized public void startSearch(String keyword) {
+    public void startSearch(String keyword) {
         searchResults.clear();
-
-        WordSearchMessage message = new WordSearchMessage(keyword, this.address, this.port);
+        
+        String connectionKey = this.address + ":" + this.port;
+        WordSearchMessage message = new WordSearchMessage(keyword, connectionKey);
+        message.addVisitedNode(this.address + ":" + this.port);
+        for (String key : connectionId.keySet()) {
+            message.addVisitedNode(key);
+        }
         for (Socket connection : connections) {
             sendMessage(connection, message);
         }
-        System.out.println("Node - " + folderPath + " - Mensagem de busca enviada (keyword: " + keyword + ")");
     }
+
 
     public void getFiles() {
         File[] files = new File(folderPath).listFiles((new FilenameFilter() {
@@ -254,7 +282,6 @@ public class Node {
 
         if (files != null) {
             for (File f : files) {
-                System.out.println("Node - " + folderPath + " - Tenho este ficheiro: " + f.getName());
                 FileSearchResult result = new FileSearchResult(null, f.length(), f.getName(), this.address, this.port);
                 myFiles.add(result);
             }
@@ -276,14 +303,12 @@ public class Node {
             }
         }
 
-        System.out.println("Node - " + folderPath + " - Pesquisa de ficheiros concluída.");
-        Socket connection = connectionId.get(message.getOriginAddress() + ":" + message.getOriginPort());
+        Socket connection = connectionId.get(message.getSenderKey());
 
         for (FileSearchResult result : results) {
             sendMessage(connection, result);
         }
-        System.out.println("Node - " + folderPath + " - Resultados de busca enviados para o nó "
-                + connection.getInetAddress().getHostName() + ":" + connection.getPort());
+        System.out.println("Node - " + folderPath + " - Resultados de busca enviados para o nó "+ connection.getInetAddress().getHostName() + ":" + connection.getPort());
     }
 
     public void updateSearchResults(FileSearchResult result) {
@@ -294,47 +319,78 @@ public class Node {
             for (FileSearchResult fsr : searchResults) {
                 if (fsr.getHash().equals(result.getHash())) {
                     fsr.addNode(result.getEndereco().get(0), result.getPorta().get(0));
-                    ;
                     return;
                 }
             }
             searchResults.add(result);
             System.out.println("Node - " + folderPath + " - Resultado de busca: " + result.getNome());
         }
+        GUI.updateSearchResults(searchResults);
     }
 
     /**************************************************************************
      **************************************************************************
      ************************************************************************** 
      * 
-     * Download de Ficheiros - por fazer
+     * Download de Ficheiros
      * 
-     * sendDownloadRequest
+     * startDownload // RequestSender // AnwserSender
      *************************************************************************
      *************************************************************************
      *************************************************************************/
-    /*
-     * public void sendDownloadRequest(FileSearchResult result) {
-     * DownloadTasksManager downloadManager = new DownloadTasksManager(result);
-     * }
-     */
+
     public void startDownload(List<FileSearchResult> resultsList) {
+        List<String> connectionKeys = new ArrayList<String>(); // todas as keys que ele conhece
+        List<String> connectionKeysUnknow = new ArrayList<String>(); // todas as keys que ele nao conhece
+
         System.out.println("quero iniciar download madje");
         for (FileSearchResult fsr : resultsList) {
-            List<FileBlockRequestMessage> requestMessages = new ArrayList<FileBlockRequestMessage>();
-            for (int i = 0; i < fsr.getTamanho(); i += BLOCK_SIZE) {
-                requestMessages.add(new FileBlockRequestMessage(fsr.getHash(), i,
-                        (int) Math.min(BLOCK_SIZE, fsr.getTamanho() - i), this.address, this.port));
+            for (int x = 0; x != fsr.getPorta().size(); x++) {
+                if (connectionId.get(fsr.getEndereco().get(x) + ":" + fsr.getPorta().get(x)) != null) {
+                    connectionKeys.add(fsr.getEndereco().get(x) + ":" + fsr.getPorta().get(x));
+                } else {
+                    connectionKeysUnknow.add(fsr.getEndereco().get(x) + ":" + fsr.getPorta().get(x));
+                }
             }
 
-            dtmByFsrHash.put(fsr.getHash(), new DownloadTasksManager(requestMessages, this));
+            if (connectionKeys.size() > 0) { // se conhecer algum dos nodes
+                if (connectionKeysUnknow.size() == 0) { //se conhecer todos os nodes
 
-            Thread[] RequestSenders = new Thread[fsr.getEndereco().size()];
+                    List<FileBlockRequestMessage> requestMessages = new ArrayList<FileBlockRequestMessage>();
+                    for (int i = 0; i < fsr.getTamanho(); i += BLOCK_SIZE) {
+                        requestMessages.add(new FileBlockRequestMessage(fsr.getHash(), i,
+                                (int) Math.min(BLOCK_SIZE, fsr.getTamanho() - i), this.address, this.port));
+                    }
 
-            for (int i = 0; i < fsr.getEndereco().size(); i++) {
-                RequestSenders[i] = new RequestSender(fsr.getEndereco().get(i), fsr.getPorta().get(i),
-                        dtmByFsrHash.get(fsr.getHash()), this);
-                RequestSenders[i].start();
+                    dtmByFsrHash.put(fsr.getHash(), new DownloadTasksManager(requestMessages, this));
+
+                    Thread[] RequestSenders = new Thread[fsr.getEndereco().size()];
+
+                    for (int i = 0; i < fsr.getEndereco().size(); i++) {
+                        RequestSenders[i] = new RequestSender(fsr.getEndereco().get(i), fsr.getPorta().get(i),
+                                dtmByFsrHash.get(fsr.getHash()), this);
+                        RequestSenders[i].start();
+                    }
+                } else { //se nao conhecer todos os nodes
+                    boolean stop = GUI.chooseToConnect(connectionKeysUnknow);
+                    if(!stop){
+                        List<FileBlockRequestMessage> requestMessages = new ArrayList<FileBlockRequestMessage>();
+                        for (int i = 0; i < fsr.getTamanho(); i += BLOCK_SIZE) {
+                            requestMessages.add(new FileBlockRequestMessage(fsr.getHash(), i,(int) Math.min(BLOCK_SIZE, fsr.getTamanho() - i), this.address, this.port));
+                        }
+                        dtmByFsrHash.put(fsr.getHash(), new DownloadTasksManager(requestMessages, this));
+                        Thread[] RequestSenders = new Thread[connectionKeys.size()];
+                        for (int i = 0; i < connectionKeys.size(); i++) {
+                            String address = connectionKeys.get(i).split(":")[0];
+                            int port = Integer.parseInt(connectionKeys.get(i).split(":")[1]);
+                            RequestSenders[i] = new RequestSender(address, port, dtmByFsrHash.get(fsr.getHash()), this);
+                            RequestSenders[i].start();
+                        }
+                    }
+
+                }
+            } else { //se nao conhecer nenhum dos nodes
+                GUI.needToConnect(connectionKeysUnknow); 
             }
 
         }
@@ -346,27 +402,29 @@ public class Node {
         private int port;
         private DownloadTasksManager dtm;
         private Node node;
+        private CountDownLatch latch;
 
         public RequestSender(String address, int port, DownloadTasksManager dtm, Node node) {
             this.address = address;
             this.port = port;
             this.dtm = dtm;
             this.node = node;
+            this.latch = new CountDownLatch(dtm.getFileBlockRequestMessages().size());
         }
 
         @Override
         public synchronized void run() {
-            while (dtm.getFileBlockRequestMessages().size() > 0) {
+            while (latch.getCount() > 0) {
                 try {
                     Socket connection = node.connectionId.get(address + ":" + port);
                     FileBlockRequestMessage request = dtm.takeRequestMessage();
                     dtm.addRequestCounter(address + ":" + port);
                     node.sendMessage(connection, request);
-                    // System.out.println("Node - " + " - Pedido de download enviado para " +
-                    // address + ":" + port);
+                    latch.countDown();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+
             }
             System.err.println("acabei de enviar esta merda toda");
         }
@@ -397,7 +455,6 @@ public class Node {
                 for (FileSearchResult fsr : node.myFiles) {
                     if (fsr.getHash().equals(fbrm.getHash())) {
                         RandomAccessFile originFile = new RandomAccessFile(node.folderPath + "/" + fsr.getNome(), "r");
-                        // System.out.println("Node - " + node.folderPath + " - tou a fazer um
                         // answerBlock de : " + fsr.getNome());
                         originFile.seek(fbrm.getOffset());
                         originFile.read(data, 0, fbrm.getLength());
@@ -420,9 +477,9 @@ public class Node {
      **************************************************************************
      ************************************************************************** 
      * 
-     * Getters e Setters
+     * Getters
      * 
-     * getSearchResults // getPort // getAddress // getFolderPath
+     * 
      *************************************************************************
      *************************************************************************
      *************************************************************************/

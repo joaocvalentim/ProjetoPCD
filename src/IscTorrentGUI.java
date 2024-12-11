@@ -14,7 +14,6 @@ import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
@@ -121,14 +120,6 @@ public class IscTorrentGUI {
                     JOptionPane.showMessageDialog(null, "Insira uma palavra-chave!", "Erro", JOptionPane.ERROR_MESSAGE);
                 else {
                     node.startSearch(searchKeyword.getText()); // enviar a palavra-chave para o nó
-                    if (node.getSearchResults().isEmpty()) // verifica se há resultados e se houver são devolvidos
-                        try {
-                            Thread.sleep(10); // se os resultados estiverem vazios esperamos 10 ms para dar tempo para processar
-                        } catch (InterruptedException e1) {
-                            e1.printStackTrace();
-                        }
-                    // pesquisa!");
-                    resultList.setListData(node.getSearchResults().toArray(new FileSearchResult[0]));
                 }
             }
         });
@@ -216,15 +207,11 @@ public class IscTorrentGUI {
                 if (addressField.getText().isEmpty() || portField.getText().isEmpty()) {
                     JOptionPane.showMessageDialog(null, "Insira o endereço e a porta do nó!", "Erro",JOptionPane.ERROR_MESSAGE);
                 } else {
-                    //os dois campos estão preenchidos
-                    try {
-                        node.newConnection(addressField.getText(), Integer.parseInt(portField.getText())); // ligar ao nó
-                        addressField.setText("");
-                        portField.setText("");
-                        connectFrame.setVisible(false);
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
+                    node.newConnection(addressField.getText(), Integer.parseInt(portField.getText())); // ligar ao nó
+                    addressField.setText("");
+                    portField.setText("");
+                    connectFrame.setVisible(false);
+                    
                 }
             }
         });
@@ -243,6 +230,11 @@ public class IscTorrentGUI {
      * 
      */
 
+
+    public void updateSearchResults(List<FileSearchResult> searchResults) {
+        resultList.setListData(searchResults.toArray(new FileSearchResult[0]));
+    }
+
     public void downloadFinished(Map<String, Integer> downloadResults, long time) {
         String message ="Descarga completa. \n";
         for (Map.Entry<String, Integer> entry : downloadResults.entrySet()) {
@@ -251,6 +243,52 @@ public class IscTorrentGUI {
 
         message += "Tempo decorrido: " + time + " segundos";
         JOptionPane.showMessageDialog(null,message, "Download Completo",JOptionPane.INFORMATION_MESSAGE);  
+    }
+
+    public void needToConnect(List<String> connectionKeyUnknow) {
+        String message = "Para realizar o download necessita de se connectar a: \n";
+        for (String key : connectionKeyUnknow) {
+            message += "Node : "+key+"\n";
+        }
+        String[] options = {"Connectar ao(s) nó(s)", "Cancelar"};
+        int answer = JOptionPane.showOptionDialog(null, message , "Problema ao iniciar download", 0, 3, null, options, JOptionPane.QUESTION_MESSAGE);
+        
+        if(answer == 0){
+            for (String key : connectionKeyUnknow) {
+                String address = key.split(":")[0];
+                int port = Integer.parseInt(key.split(":")[1]);
+                node.newConnection(address, port);   
+            }
+            List<FileSearchResult> fsr = new ArrayList<FileSearchResult>();
+            fsr.addAll(resultList.getSelectedValuesList());
+            node.startDownload(fsr);
+        }
+        
+    }
+
+    public boolean chooseToConnect(List <String> connectionKeyUnknow) {
+        boolean stop = true;
+
+        String message = "Prefere realizar o ficheiro apenas com os nós conhecidos ou deseja ligar ao(s) nó(s)? \n";
+        for (String key : connectionKeyUnknow) {
+            message += "Node : "+key+"\n";
+        }
+        String[] options = {"Apenas nós conhecidos", "Ligar ao(s) nó(s)", "Cancelar"};
+        int answer = JOptionPane.showOptionDialog(null, message , "Problema ao iniciar download", 0, 3, null, options, JOptionPane.QUESTION_MESSAGE);
+        if(answer == 0){
+            stop = false;
+        } else if(answer == 1){
+            for (String key : connectionKeyUnknow) {
+                String address = key.split(":")[0];
+                int port = Integer.parseInt(key.split(":")[1]);
+                node.newConnection(address, port);   
+            }
+            List<FileSearchResult> fsr = new ArrayList<FileSearchResult>();
+            fsr.addAll(resultList.getSelectedValuesList());
+            node.startDownload(fsr);
+        } 
+        return stop;
+        
     }
 
     public void connectToSelf() {
