@@ -100,14 +100,13 @@ public class DownloadTasksManager implements Serializable {
       return fileBlockAnswerMessages;
    }
 
-   public void addRequestCounter(String hash) {
-      if(requestCounter.containsKey(hash)){
-         requestCounter.put(hash, requestCounter.get(hash) + 1);
+   public void addRequestCounter(String key) {
+      if(requestCounter.containsKey(key)){
+         requestCounter.put(key, requestCounter.get(key) + 1);
       } else {
-         requestCounter.put(hash, 1);
+         requestCounter.put(key, 1);
       }
    }
-
 
    private static class Downloader extends Thread {
 
@@ -145,7 +144,6 @@ public class DownloadTasksManager implements Serializable {
          } finally {
             endTime = System.currentTimeMillis();
             node.getGUI().downloadFinished(downloadTasksManager.requestCounter, (endTime - startTime)/1000);
-            //System.out.println("DownloadTasksManager: Acabou" + (endTime - startTime)/1000 + " s");
          }
       }
 
@@ -164,7 +162,7 @@ public class DownloadTasksManager implements Serializable {
       }
 
       // cria o ficheiro a partir dos blocos recebidos
-      public synchronized void createFile() {
+      public void createFile() {
          try {
             String nome = "";
             for (FileSearchResult fsr : node.getSearchResults()) {

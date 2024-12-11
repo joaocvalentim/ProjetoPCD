@@ -89,8 +89,6 @@ public class Node {
             outputStreams.put(connection, output);
 
             connections.add(connection);
-            System.out.println("CARALHO" + address1 + ":" + port1);
-
             connectionId.put(address1 + ":" + port1, connection);
             System.out.println("Node - " + folderPath + " - Conexão estabelecida com " + address1 + ":" + port1);
 
@@ -217,7 +215,6 @@ public class Node {
                 // se nao conhecer o node que iniciou a busca -> reencaminhar para o primeiro
                 // node da lista de visitedNodes que conhecer
             } else {
-
                 for (String key : search.getVisitedNodes()) {
                     if (connectionId.containsKey(key)) {
                         System.out.println(
@@ -458,7 +455,6 @@ public class Node {
                 for (FileSearchResult fsr : node.myFiles) {
                     if (fsr.getHash().equals(fbrm.getHash())) {
                         RandomAccessFile originFile = new RandomAccessFile(node.folderPath + "/" + fsr.getNome(), "r");
-                        // System.out.println("Node - " + node.folderPath + " - tou a fazer um
                         // answerBlock de : " + fsr.getNome());
                         originFile.seek(fbrm.getOffset());
                         originFile.read(data, 0, fbrm.getLength());

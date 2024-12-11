@@ -65,7 +65,6 @@ public class NodeServer extends Thread {
             this.input = new ObjectInputStream(clientSocket.getInputStream());
             System.out.println("Streams iniciados com " + clientSocket.getInetAddress().getHostName() + ":"
                     + clientSocket.getPort());
-
         }
 
         @Override
@@ -78,8 +77,6 @@ public class NodeServer extends Thread {
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
                 closeConnection();
-
-                    
             } 
         }
 

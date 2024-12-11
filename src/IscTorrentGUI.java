@@ -269,7 +269,7 @@ public class IscTorrentGUI {
     public boolean chooseToConnect(List <String> connectionKeyUnknow) {
         boolean stop = true;
 
-        String message = "Prefere realizar o ficheiro apenas com os nós conhecidos ou deseja ligar aos nós? \n";
+        String message = "Prefere realizar o ficheiro apenas com os nós conhecidos ou deseja ligar ao(s) nó(s)? \n";
         for (String key : connectionKeyUnknow) {
             message += "Node : "+key+"\n";
         }

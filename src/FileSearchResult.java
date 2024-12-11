@@ -24,8 +24,8 @@ public class FileSearchResult implements Serializable{
    private String hash;
    private long tamanho;
    private String nome;
-   private List<String> endereco = new ArrayList<String>(); 
-   private List<Integer> porta = new ArrayList<Integer>();   
+   private List<String> endereco = new ArrayList<String>();  //Endereço IP do nó que possui o ficheiro
+   private List<Integer> porta = new ArrayList<Integer>();   //Porta do nó que possui o ficheiro
 
    public FileSearchResult(WordSearchMessage wordSearchMessage, long tamanho, String nome, String endereco, int porta) {
       this.wordSearchMessage = wordSearchMessage;
@@ -44,7 +44,6 @@ public class FileSearchResult implements Serializable{
          String input = nome + tamanho;
          byte[] hashInput = md.digest(input.getBytes());
          this.hash = bytesToHex(hashInput);
-
       } catch (NoSuchAlgorithmException e) {
          e.printStackTrace();
       }
