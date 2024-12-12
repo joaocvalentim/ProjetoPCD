@@ -7,8 +7,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class NodeServer extends Thread {
-    private ServerSocket serverSocket;
-    private Node node;
+    private ServerSocket serverSocket; // socket responsável pelas conexões na porta do nó
+    private Node node; // nó associado ao servidor
 
     public NodeServer(Node node) throws IOException {
         this.node = node;

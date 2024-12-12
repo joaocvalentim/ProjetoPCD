@@ -16,7 +16,7 @@ public class FileBlockRequestMessage implements Serializable {
    private String hash;
    private int offset;
    private int length;
-   private String requestAddress;
+   private String requestAddress; // endereço do nó que fez o pedido
    private int requestPort;
 
    public FileBlockRequestMessage(String hash, int offset, int length, String requestAddress, int requestPort) {

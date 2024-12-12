@@ -22,7 +22,7 @@ import java.util.List;
 public class FileSearchResult implements Serializable{
    private WordSearchMessage wordSearchMessage;
    private String hash;
-   private long tamanho;
+   private long tamanho; // do ficheiro encontrado
    private String nome;
    private List<String> endereco = new ArrayList<String>();  //Endereço IP do nó que possui o ficheiro
    private List<Integer> porta = new ArrayList<Integer>();   //Porta do nó que possui o ficheiro
@@ -33,11 +33,11 @@ public class FileSearchResult implements Serializable{
       this.nome = nome;
       this.endereco.add(endereco);
       this.porta.add(porta);
-
-      //Cada ficheiro ter´a um valor de hash associado. Este valor deve ser calculado pelo algoritmo SHA-256, sugerindo-se para tal a utiliza¸c˜ao da classe MessageDigest 2
+      // Cada ficheiro terá um valor de hash associado, calculado pelo algoritmo SHA-256
       createHash(nome, tamanho);
    }
 
+   // criar o hash combinando o nome e o tamanho do ficheiro
    private void createHash(String nome, long tamanho) {
       try{
          MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -49,6 +49,7 @@ public class FileSearchResult implements Serializable{
       }
    }
 
+   // converte o hash para hexadecimal
    private String bytesToHex(byte[] hashInput) {
       Formatter formatter = new Formatter();
       for (byte b : hashInput) {
@@ -83,6 +84,7 @@ public class FileSearchResult implements Serializable{
       return tamanho;
    }
 
+   // quando temos mais de um nó a dar nos a mesma resposta fazemos essa contagem
    public void addNode(String endereco, int porta) {
       for (int i = 0; i < this.endereco.size(); i++) {
          if (this.endereco.get(i).equals(endereco) && this.porta.get(i) == porta) {

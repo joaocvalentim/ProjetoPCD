@@ -9,9 +9,9 @@ import java.io.Serializable;
 
 public class FileBlockAnswerMessage implements Serializable{
 
-   private String hash;
-   private int offset;
-   private int length;
+   private String hash; // distingue ficheiros por nome e tamanho
+   private int offset; // indica a posição do bloco dentro do ficheiro 
+   private int length; // tamanho do bloco
    private byte[] data;
 
    public FileBlockAnswerMessage(String hash, int offset, int length, byte[] data) {

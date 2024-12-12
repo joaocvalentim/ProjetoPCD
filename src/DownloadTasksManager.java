@@ -23,10 +23,10 @@ public class DownloadTasksManager implements Serializable {
    // private int numBlocksSent = 0; //numero de blocos enviados
    // private int numBlocksReceived = 0; //numero de blocos recebidos
 
-   private List<FileBlockRequestMessage> fileBlockRequestMessages; // lista onde vão ser adicionados os pedidos
-   private List<FileBlockAnswerMessage> fileBlockAnswerMessages; // lista onde vão ser adicionadas as respostas
-   private Node requesterNode;
-   private Map<String, Integer> requestCounter ; // contador de pedidos de bloco de ficheiro
+   private List<FileBlockRequestMessage> fileBlockRequestMessages; // lista onde vão ser adicionados os pedidos que ainda vão ser processados
+   private List<FileBlockAnswerMessage> fileBlockAnswerMessages; // lista onde vão ser adicionadas as respostas 
+   private Node requesterNode; // nó que iniciou o pedido de download
+   private Map<String, Integer> requestCounter ; // número de pedidos feitos para cada bloco
 
    private Lock lock = new ReentrantLock(); // lock para garantir a sincronização entre threads
    private Condition requestNotEmpty = lock.newCondition(); // condição para agir: notEmpty - necessário usar para avisar o consumidor quando a lista não está vazia
@@ -50,8 +50,6 @@ public class DownloadTasksManager implements Serializable {
       } finally {
          lock.unlock();
       }
-      
-
    }
 
    public FileBlockRequestMessage takeRequestMessage() throws InterruptedException {
@@ -108,7 +106,7 @@ public class DownloadTasksManager implements Serializable {
       }
    }
 
-   private static class Downloader extends Thread {
+   private static class Downloader extends Thread { 
 
       private DownloadTasksManager downloadTasksManager;
       private List<FileBlockAnswerMessage> fileBlockAnswerMessages;
@@ -119,7 +117,7 @@ public class DownloadTasksManager implements Serializable {
       
       private CountDownLatch latch;
 
-
+      // classe interna
       public Downloader(DownloadTasksManager dtm) {
          this.downloadTasksManager = dtm;
          this.fileBlockAnswerMessages = new ArrayList<FileBlockAnswerMessage>();
@@ -147,7 +145,7 @@ public class DownloadTasksManager implements Serializable {
          }
       }
 
-      // ordena a lista de respostas por ordem de bloco
+      // ordena a lista de respostas por ordem de bloco a partir do offset
       public void orderAnswerBlocks (){
          FileBlockAnswerMessage temp;
          for (int i=fileBlockAnswerMessages.size()-1;i!=0;i--){
@@ -161,7 +159,7 @@ public class DownloadTasksManager implements Serializable {
          }
       }
 
-      // cria o ficheiro a partir dos blocos recebidos
+      // cria o ficheiro final a partir dos blocos recebidos na ordem correta e guarda o ficheiro no caminho indicado
       public void createFile() {
          try {
             String nome = "";
